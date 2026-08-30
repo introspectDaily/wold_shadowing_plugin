@@ -21,6 +21,10 @@ export interface Phoneme {
   subcategory: string;
   /** 元音 / 辅音 */
   type: 'vowel' | 'consonant';
+  /** 该音标单独发音的音频地址（人工配置的默认值，可选） */
+  audio?: string;
+  /** 来源参考（简短标注） */
+  ref?: string;
   /** 发音要点说明 */
   description: string;
   /** 示例单词（含音标） */
@@ -53,15 +57,19 @@ const affricateSub = '破擦音';
 const nasalSub = '鼻音';
 const approximantSub = '近音';
 
+const REF_VOWEL = 'Oxford 发音指南 · Wikipedia: English phonology';
+const REF_CONSONANT = 'Wikipedia: English phonology · Oxford 发音指南';
+
 export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/ɪ/',
     subcategory: shortVowelSub,
+    ref: REF_VOWEL,
     name: '短元音 /ɪ/',
     category: monophthongCategory,
     type: 'vowel',
     description:
-      '短音 i，像中文「一」但更短更放松，嘴唇微微展开。常见于 sit、big。',
+      '短音 i，音值为 [ɪ]：比中文「一」（[i]）更松、更低、更靠后，发音短促、嘴角微展、口腔放松。常见于 sit、big。',
     words: [
       { word: 'bit', phonetic: '/bɪt/' },
       { word: 'sit', phonetic: '/sɪt/' },
@@ -74,11 +82,12 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/e/',
     subcategory: shortVowelSub,
+    ref: REF_VOWEL,
     name: '短元音 /e/',
     category: monophthongCategory,
     type: 'vowel',
     description:
-      '嘴角向两侧微展、下颚略张的短音，介于「哎」与「诶」之间。如 bed、pen。',
+      '短音 e，音值为 [e]~[ɛ]（中/中低前不圆唇元音）：中文里没有完全对应的单韵母，可理解为发「诶」但更短促、干脆、不带 i 尾。如 bed、pen。',
     words: [
       { word: 'bed', phonetic: '/bed/' },
       { word: 'red', phonetic: '/red/' },
@@ -91,6 +100,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/æ/',
     subcategory: shortVowelSub,
+    ref: REF_VOWEL,
     name: '短元音 /æ/',
     category: monophthongCategory,
     type: 'vowel',
@@ -108,6 +118,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/ʌ/',
     subcategory: shortVowelSub,
+    ref: REF_VOWEL,
     name: '短元音 /ʌ/',
     category: monophthongCategory,
     type: 'vowel',
@@ -125,6 +136,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/ɒ/',
     subcategory: shortVowelSub,
+    ref: REF_VOWEL,
     name: '短元音 /ɒ/',
     category: monophthongCategory,
     type: 'vowel',
@@ -142,6 +154,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/ʊ/',
     subcategory: shortVowelSub,
+    ref: REF_VOWEL,
     name: '短元音 /ʊ/',
     category: monophthongCategory,
     type: 'vowel',
@@ -159,6 +172,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/ə/',
     subcategory: shortVowelSub,
+    ref: REF_VOWEL,
     name: '中央元音 /ə/',
     category: monophthongCategory,
     type: 'vowel',
@@ -176,11 +190,12 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/iː/',
     subcategory: longVowelSub,
+    ref: REF_VOWEL,
     name: '长元音 /iː/',
     category: monophthongCategory,
     type: 'vowel',
     description:
-      '长音 i，嘴角向两侧拉开、发音时值更长、声音更「紧」。如 see、tea。',
+      '长音 i，音值为 [i]：和中文「一」的口型舌位几乎相同，但时值更长、嘴角向两侧拉开、发音更紧绷。如 see、tea。',
     words: [
       { word: 'see', phonetic: '/siː/' },
       { word: 'sea', phonetic: '/siː/' },
@@ -193,6 +208,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/ɜː/',
     subcategory: longVowelSub,
+    ref: REF_VOWEL,
     name: '长元音 /ɜː/',
     category: monophthongCategory,
     type: 'vowel',
@@ -210,6 +226,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/ɑː/',
     subcategory: longVowelSub,
+    ref: REF_VOWEL,
     name: '长元音 /ɑː/',
     category: monophthongCategory,
     type: 'vowel',
@@ -227,6 +244,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/ɔː/',
     subcategory: longVowelSub,
+    ref: REF_VOWEL,
     name: '长元音 /ɔː/',
     category: monophthongCategory,
     type: 'vowel',
@@ -244,6 +262,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/uː/',
     subcategory: longVowelSub,
+    ref: REF_VOWEL,
     name: '长元音 /uː/',
     category: monophthongCategory,
     type: 'vowel',
@@ -261,6 +280,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/eɪ/',
     subcategory: diphthongSub,
+    ref: REF_VOWEL,
     name: '双元音 /eɪ/',
     category: diphthongCategory,
     type: 'vowel',
@@ -278,6 +298,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/aɪ/',
     subcategory: diphthongSub,
+    ref: REF_VOWEL,
     name: '双元音 /aɪ/',
     category: diphthongCategory,
     type: 'vowel',
@@ -295,6 +316,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/ɔɪ/',
     subcategory: diphthongSub,
+    ref: REF_VOWEL,
     name: '双元音 /ɔɪ/',
     category: diphthongCategory,
     type: 'vowel',
@@ -312,6 +334,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/aʊ/',
     subcategory: diphthongSub,
+    ref: REF_VOWEL,
     name: '双元音 /aʊ/',
     category: diphthongCategory,
     type: 'vowel',
@@ -329,6 +352,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/əʊ/',
     subcategory: diphthongSub,
+    ref: REF_VOWEL,
     name: '双元音 /əʊ/',
     category: diphthongCategory,
     type: 'vowel',
@@ -346,6 +370,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/ɪə/',
     subcategory: diphthongSub,
+    ref: REF_VOWEL,
     name: '双元音 /ɪə/',
     category: diphthongCategory,
     type: 'vowel',
@@ -363,6 +388,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/eə/',
     subcategory: diphthongSub,
+    ref: REF_VOWEL,
     name: '双元音 /eə/',
     category: diphthongCategory,
     type: 'vowel',
@@ -380,6 +406,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
   {
     symbol: '/ʊə/',
     subcategory: diphthongSub,
+    ref: REF_VOWEL,
     name: '双元音 /ʊə/',
     category: diphthongCategory,
     type: 'vowel',
@@ -406,6 +433,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/p/',
     subcategory: plosiveSub,
+    ref: REF_CONSONANT,
     name: '清爆破音 /p/',
     category: plosiveCategory,
     type: 'consonant',
@@ -423,6 +451,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/b/',
     subcategory: plosiveSub,
+    ref: REF_CONSONANT,
     name: '浊爆破音 /b/',
     category: plosiveCategory,
     type: 'consonant',
@@ -440,6 +469,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/t/',
     subcategory: plosiveSub,
+    ref: REF_CONSONANT,
     name: '清爆破音 /t/',
     category: plosiveCategory,
     type: 'consonant',
@@ -457,6 +487,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/d/',
     subcategory: plosiveSub,
+    ref: REF_CONSONANT,
     name: '浊爆破音 /d/',
     category: plosiveCategory,
     type: 'consonant',
@@ -474,6 +505,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/k/',
     subcategory: plosiveSub,
+    ref: REF_CONSONANT,
     name: '清爆破音 /k/',
     category: plosiveCategory,
     type: 'consonant',
@@ -491,6 +523,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/ɡ/',
     subcategory: plosiveSub,
+    ref: REF_CONSONANT,
     name: '浊爆破音 /ɡ/',
     category: plosiveCategory,
     type: 'consonant',
@@ -508,6 +541,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/f/',
     subcategory: fricativeSub,
+    ref: REF_CONSONANT,
     name: '清摩擦音 /f/',
     category: fricativeCategory,
     type: 'consonant',
@@ -525,6 +559,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/v/',
     subcategory: fricativeSub,
+    ref: REF_CONSONANT,
     name: '浊摩擦音 /v/',
     category: fricativeCategory,
     type: 'consonant',
@@ -542,6 +577,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/θ/',
     subcategory: fricativeSub,
+    ref: REF_CONSONANT,
     name: '清摩擦音 /θ/',
     category: fricativeCategory,
     type: 'consonant',
@@ -559,6 +595,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/ð/',
     subcategory: fricativeSub,
+    ref: REF_CONSONANT,
     name: '浊摩擦音 /ð/',
     category: fricativeCategory,
     type: 'consonant',
@@ -576,6 +613,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/s/',
     subcategory: fricativeSub,
+    ref: REF_CONSONANT,
     name: '清摩擦音 /s/',
     category: fricativeCategory,
     type: 'consonant',
@@ -593,6 +631,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/z/',
     subcategory: fricativeSub,
+    ref: REF_CONSONANT,
     name: '浊摩擦音 /z/',
     category: fricativeCategory,
     type: 'consonant',
@@ -610,6 +649,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/ʃ/',
     subcategory: fricativeSub,
+    ref: REF_CONSONANT,
     name: '清摩擦音 /ʃ/',
     category: fricativeCategory,
     type: 'consonant',
@@ -627,6 +667,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/ʒ/',
     subcategory: fricativeSub,
+    ref: REF_CONSONANT,
     name: '浊摩擦音 /ʒ/',
     category: fricativeCategory,
     type: 'consonant',
@@ -644,6 +685,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/h/',
     subcategory: fricativeSub,
+    ref: REF_CONSONANT,
     name: '清摩擦音 /h/',
     category: fricativeCategory,
     type: 'consonant',
@@ -661,6 +703,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/tʃ/',
     subcategory: affricateSub,
+    ref: REF_CONSONANT,
     name: '清破擦音 /tʃ/',
     category: affricateCategory,
     type: 'consonant',
@@ -678,6 +721,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/dʒ/',
     subcategory: affricateSub,
+    ref: REF_CONSONANT,
     name: '浊破擦音 /dʒ/',
     category: affricateCategory,
     type: 'consonant',
@@ -695,6 +739,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/m/',
     subcategory: nasalSub,
+    ref: REF_CONSONANT,
     name: '鼻音 /m/',
     category: nasalCategory,
     type: 'consonant',
@@ -712,6 +757,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/n/',
     subcategory: nasalSub,
+    ref: REF_CONSONANT,
     name: '鼻音 /n/',
     category: nasalCategory,
     type: 'consonant',
@@ -729,6 +775,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/ŋ/',
     subcategory: nasalSub,
+    ref: REF_CONSONANT,
     name: '鼻音 /ŋ/',
     category: nasalCategory,
     type: 'consonant',
@@ -746,6 +793,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/l/',
     subcategory: approximantSub,
+    ref: REF_CONSONANT,
     name: '近音 /l/',
     category: approximantCategory,
     type: 'consonant',
@@ -763,11 +811,12 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/r/',
     subcategory: approximantSub,
+    ref: REF_CONSONANT,
     name: '近音 /r/',
     category: approximantCategory,
     type: 'consonant',
     description:
-      '舌尖向硬腭卷起但不接触，气流从舌面通过，声带振动。如 red、run、right。',
+      '齿龈后（卷舌）近音 [ɹ̠]，舌尖向硬腭卷起但不接触、气流从舌面通过，声带振动。符号写作 /r/，但通常不是颤音。如 red、run、right。',
     words: [
       { word: 'red', phonetic: '/red/' },
       { word: 'run', phonetic: '/rʌn/' },
@@ -780,6 +829,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/j/',
     subcategory: approximantSub,
+    ref: REF_CONSONANT,
     name: '近音 /j/',
     category: approximantCategory,
     type: 'consonant',
@@ -797,6 +847,7 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
   {
     symbol: '/w/',
     subcategory: approximantSub,
+    ref: REF_CONSONANT,
     name: '近音 /w/',
     category: approximantCategory,
     type: 'consonant',

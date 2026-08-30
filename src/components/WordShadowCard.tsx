@@ -7,14 +7,17 @@ import { uid } from '../lib/ids';
 import { RecorderWidget } from './RecorderWidget';
 import { RecordingList } from './RecordingList';
 import { Icon } from './Icon';
+import { WordPhonetics } from './WordPhonetics';
 
 interface WordShadowCardProps {
   word: string;
   phonetic: string;
+  /** 用户单词可删除（内置单词不传则不显示删除） */
+  onDelete?: () => void;
 }
 
 /** 单个单词的跟读卡片：标准发音 + 录音 + 回放跟读 */
-export function WordShadowCard({ word, phonetic }: WordShadowCardProps) {
+export function WordShadowCard({ word, phonetic, onDelete }: WordShadowCardProps) {
   const audio = useAudio();
   const recordings = useRecordings(word);
 
@@ -40,7 +43,9 @@ export function WordShadowCard({ word, phonetic }: WordShadowCardProps) {
       <div className="ws-head">
         <div className="ws-title">
           <span className="ws-word">{word}</span>
-          <span className="ws-phonetic">{phonetic}</span>
+          <span className="ws-phonetic">
+            <WordPhonetics word={word} fallback={phonetic} fetch />
+          </span>
         </div>
         <div className="ws-pronounce">
           <button
@@ -61,6 +66,16 @@ export function WordShadowCard({ word, phonetic }: WordShadowCardProps) {
             <Icon name="volume" size={13} />
             英
           </button>
+          {onDelete && (
+            <button
+              type="button"
+              className="icon-btn danger"
+              onClick={onDelete}
+              title="删除这个单词"
+            >
+              <Icon name="trash" size={14} />
+            </button>
+          )}
         </div>
       </div>
       <RecorderWidget onSave={handleSave} />

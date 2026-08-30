@@ -4,6 +4,7 @@ import { IpaChart } from './IpaChart';
 import { IpaCompare } from './IpaCompare';
 import { PhonemeDetail } from './PhonemeDetail';
 import { IpaPairDetail } from './IpaPairDetail';
+import { IpaReferences } from './IpaReferences';
 
 type Tab = 'chart' | 'compare';
 
@@ -63,6 +64,7 @@ export function IpaTeaching() {
       ) : (
         <IpaCompare onOpen={setPair} />
       )}
+      <IpaReferences />
     </div>
   );
 }

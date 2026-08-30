@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import type { Phoneme } from '../lib/ipa-data';
 import { PhonemeHead } from './PhonemeBody';
 import { WordShadowCard } from './WordShadowCard';
+import { UserWordAdder } from './UserWordAdder';
+import { useIpaUserWords } from '../lib/ipaUserWords';
 import { Icon } from './Icon';
 import { warmUpMic, releaseMic } from '../lib/mic';
 
@@ -15,6 +17,9 @@ interface IpaPairDetailProps {
 }
 
 function ShadowColumn({ phoneme }: { phoneme: Phoneme }) {
+  const { map, remove } = useIpaUserWords();
+  const userWords = map[phoneme.symbol] ?? [];
+
   return (
     <div className="ipa-compare-col">
       <PhonemeHead phoneme={phoneme} />
@@ -23,6 +28,18 @@ function ShadowColumn({ phoneme }: { phoneme: Phoneme }) {
         {phoneme.words.map((w) => (
           <WordShadowCard key={w.word} word={w.word} phonetic={w.phonetic} />
         ))}
+        {userWords.map((w) => (
+          <WordShadowCard
+            key={w.word}
+            word={w.word}
+            phonetic={w.phonetic}
+            onDelete={() => void remove(phoneme.symbol, w.word)}
+          />
+        ))}
+      </div>
+      <div className="ws-adder">
+        <div className="card-title">我的单词（可增删）</div>
+        <UserWordAdder symbol={phoneme.symbol} />
       </div>
     </div>
   );
