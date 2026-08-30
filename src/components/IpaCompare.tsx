@@ -6,6 +6,10 @@ interface IpaCompareProps {
   onOpen: (pair: IpaPair) => void;
 }
 
+function pairId(pair: IpaPair): string {
+  return `pair-${pair.a.replace(/\//g, '')}-${pair.b.replace(/\//g, '')}`;
+}
+
 export function IpaCompare({ onOpen }: IpaCompareProps) {
   return (
     <div className="ipa-compare">
@@ -19,7 +23,7 @@ export function IpaCompare({ onOpen }: IpaCompareProps) {
           const b = getPhoneme(pair.b);
           if (!a || !b) return null;
           return (
-            <section className="card ipa-pair" key={pair.a + pair.b}>
+            <section className="card ipa-pair" key={pair.a + pair.b} id={pairId(pair)}>
               <div className="ipa-pair-head">
                 <span className="ipa-pair-label">
                   {pair.label}

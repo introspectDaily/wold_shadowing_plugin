@@ -8,6 +8,7 @@ import { WordList } from './components/WordList';
 import { WordDetail } from './components/WordDetail';
 import { Icon } from './components/Icon';
 import { SettingsPanel } from './components/SettingsPanel';
+import { SpeedControl } from './components/SpeedControl';
 
 const PENDING_KEY = 'pendingLookup';
 
@@ -77,14 +78,17 @@ export function App({ compact }: AppProps) {
           </span>
           <span className="brand-name">单词跟读</span>
           {compact && typeof chrome.sidePanel !== 'undefined' && (
-            <button
-              type="button"
-              className="link-btn sidepanel-btn"
-              onClick={() => void openSidepanel()}
-              title="在侧边栏打开完整面板"
-            >
-              侧边栏
-            </button>
+            <>
+              <SpeedControl />
+              <button
+                type="button"
+                className="link-btn sidepanel-btn"
+                onClick={() => void openSidepanel()}
+                title="在侧边栏打开完整面板"
+              >
+                侧边栏
+              </button>
+            </>
           )}
           <div className="header-actions">
             <button

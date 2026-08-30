@@ -28,7 +28,7 @@ function PhonemeCard({ symbol, onSelect }: { symbol: string; onSelect: (s: strin
   return (
     <div className="ipa-chart-card" onClick={() => onSelect(p.symbol)} title={p.name}>
       <div className="ipa-chart-card-head">
-        <span className="ipa-symbol-lg">{p.symbol}</span>
+        <span className="ipa-symbol">{p.symbol}</span>
         <div className="ipa-chart-card-meta">
           <span className="ipa-name">{p.name}</span>
           <div className="ipa-meta-tags">
@@ -56,7 +56,7 @@ function PhonemeCard({ symbol, onSelect }: { symbol: string; onSelect: (s: strin
                 }}
                 title="美式发音"
               >
-                <Icon name="volume" size={13} />
+                <Icon name="volume" size={12} />
                 美
               </button>
               <button
@@ -68,16 +68,12 @@ function PhonemeCard({ symbol, onSelect }: { symbol: string; onSelect: (s: strin
                 }}
                 title="英式发音"
               >
-                <Icon name="volume" size={13} />
+                <Icon name="volume" size={12} />
                 英
               </button>
             </div>
           </div>
         ))}
-      </div>
-      <div className="ipa-chart-card-enter">
-        <span className="muted small">点击卡片进入该音标专属练习页</span>
-        <Icon name="arrow" size={13} />
       </div>
     </div>
   );
@@ -98,10 +94,12 @@ function groupBySubcategory(list: Phoneme[]): { sub: string; items: Phoneme[] }[
 
 function Section({
   title,
+  prefix,
   groups,
   onSelect,
 }: {
   title: string;
+  prefix: string;
   groups: { sub: string; items: Phoneme[] }[];
   onSelect: (s: string) => void;
 }) {
@@ -109,7 +107,7 @@ function Section({
     <section className="card">
       <div className="card-title">{title}</div>
       {groups.map((g) => (
-        <div className="ipa-group" key={g.sub}>
+        <div className="ipa-group" key={g.sub} id={`${prefix}-${g.sub}`}>
           <div className="ipa-group-label">{g.sub}</div>
           <div className="ipa-chart-grid">
             {g.items.map((p) => (
@@ -132,8 +130,8 @@ export function IpaChart({ onSelect }: IpaChartProps) {
         国际音标（IPA）教学表。单元音细分为长元音、短元音。每个音标卡片展示了示例单词，
         可先听标准发音；点击卡片进入该音标的专属练习页。
       </p>
-      <Section title="元音 Vowels" groups={vowelGroups} onSelect={onSelect} />
-      <Section title="辅音 Consonants" groups={consonantGroups} onSelect={onSelect} />
+      <Section title="元音 Vowels" prefix="vowel" groups={vowelGroups} onSelect={onSelect} />
+      <Section title="辅音 Consonants" prefix="cons" groups={consonantGroups} onSelect={onSelect} />
       <p className="muted small ipa-hint">
         <Icon name="spark" size={11} />
         提示：卡片上的美/英按钮可单独听示例单词发音，点击卡片其余区域进入该音标的专属练习页。

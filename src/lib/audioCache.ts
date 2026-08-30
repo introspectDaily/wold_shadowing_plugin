@@ -86,8 +86,12 @@ export async function clearAudioCache(): Promise<void> {
 }
 
 /** useAudio 的最小播放接口（避免循环依赖） */
-interface Playable {
-  play(key: string, url: string, handlers?: { onError?: () => void }): void;
+export interface Playable {
+  play(
+    key: string,
+    url: string,
+    handlers?: { onEnded?: () => void; onError?: () => void },
+  ): void;
   isPlaying(key: string): boolean;
   stop(): void;
 }
@@ -113,15 +117,22 @@ export async function playCachedAudio(
   audio: Playable,
   key: string,
   url: string,
-  onError?: () => void,
+  handlers?:
+    | { onEnded?: () => void; onError?: () => void }
+    | (() => void),
 ): Promise<void> {
   if (audio.isPlaying(key)) {
     audio.stop();
     return;
   }
+  // 兼容旧的“直接传 onError 函数”调用方式
+  const opts =
+    typeof handlers === 'function'
+      ? { onEnded: undefined, onError: handlers }
+      : { onEnded: handlers?.onEnded, onError: handlers?.onError };
   const cached = await getAudioBlob(key);
   if (cached) {
-    audio.play(key, makeUrl(key, cached), { onError });
+    audio.play(key, makeUrl(key, cached), opts);
     return;
   }
   try {
@@ -130,9 +141,10 @@ export async function playCachedAudio(
     const blob = await res.blob();
     if (blob.size === 0) throw new Error('empty audio');
     await saveAudioBlob(key, blob);
-    audio.play(key, makeUrl(key, blob), { onError });
+    audio.play(key, makeUrl(key, blob), opts);
   } catch {
     // 下载失败（离线/接口异常）：交给调用方兜底（浏览器本地语音）
-    onError?.();
+    if (typeof handlers === 'function') handlers();
+    else handlers?.onError?.();
   }
 }

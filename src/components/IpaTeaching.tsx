@@ -1,14 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
-import { getPhoneme, type IpaPair } from '../lib/ipa-data';
+import {
+  VOWEL_PHONEMES,
+  CONSONANT_PHONEMES,
+  IPA_PAIRS,
+  getPhoneme,
+  type IpaPair,
+  type Phoneme,
+} from '../lib/ipa-data';
+import { IpaOverview } from './IpaOverview';
 import { IpaChart } from './IpaChart';
 import { IpaCompare } from './IpaCompare';
 import { PhonemeDetail } from './PhonemeDetail';
 import { IpaPairDetail } from './IpaPairDetail';
 import { IpaReferences } from './IpaReferences';
+import { OutlineNav, type OutlineItem } from './OutlineNav';
 
-type Tab = 'chart' | 'compare';
+type Tab = 'overview' | 'chart' | 'compare';
 
 const TABS: { key: Tab; label: string }[] = [
+  { key: 'overview', label: '特别总览' },
   { key: 'chart', label: '音标表' },
   { key: 'compare', label: '易混淆对比' },
 ];
@@ -19,8 +29,43 @@ function getScroller(): HTMLElement {
   return el ?? (document.scrollingElement as HTMLElement);
 }
 
+function groupBySubcategory(list: Phoneme[]): { sub: string; items: Phoneme[] }[] {
+  const order: string[] = [];
+  const map = new Map<string, Phoneme[]>();
+  for (const p of list) {
+    if (!map.has(p.subcategory)) {
+      map.set(p.subcategory, []);
+      order.push(p.subcategory);
+    }
+    map.get(p.subcategory)!.push(p);
+  }
+  return order.map((sub) => ({ sub, items: map.get(sub)! }));
+}
+
+function pairId(pair: IpaPair): string {
+  return `pair-${pair.a.replace(/\//g, '')}-${pair.b.replace(/\//g, '')}`;
+}
+
+function chartOutline(): OutlineItem[] {
+  const items: OutlineItem[] = [];
+  const push = (prefix: string, sub: string) => {
+    items.push({ id: `${prefix}-${sub}`, label: sub, hint: '' });
+  };
+  for (const g of groupBySubcategory(VOWEL_PHONEMES)) push('vowel', g.sub);
+  for (const g of groupBySubcategory(CONSONANT_PHONEMES)) push('cons', g.sub);
+  return items;
+}
+
+function compareOutline(): OutlineItem[] {
+  return IPA_PAIRS.map((p) => ({
+    id: pairId(p),
+    label: p.label,
+    hint: p.hint,
+  }));
+}
+
 export function IpaTeaching() {
-  const [tab, setTab] = useState<Tab>('chart');
+  const [tab, setTab] = useState<Tab>('overview');
   const [selected, setSelected] = useState<string | null>(null);
   const [pair, setPair] = useState<IpaPair | null>(null);
   // 记录进入详情/对比前的滚动位置，返回时恢复
@@ -59,6 +104,17 @@ export function IpaTeaching() {
     }
   }, [inDetail]);
 
+  // 大纲导航点击：滚动到目标区域
+  const navigateTo = (id: string) => {
+    const target = document.getElementById(id);
+    if (!target) return;
+    const sc = getScroller();
+    const top = target.getBoundingClientRect().top + sc.scrollTop - sc.getBoundingClientRect().top - 12;
+    sc.scrollTo({ top, behavior: 'smooth' });
+  };
+
+  const outlineItems = tab === 'chart' ? chartOutline() : tab === 'compare' ? compareOutline() : [];
+
   // 易混淆对比详情页：展示最全信息 + 支持跟读
   if (pair && a && b) {
     return (
@@ -92,12 +148,15 @@ export function IpaTeaching() {
           </button>
         ))}
       </div>
-      {tab === 'chart' ? (
+      {tab === 'overview' ? (
+        <IpaOverview onShadow={openPhoneme} />
+      ) : tab === 'chart' ? (
         <IpaChart onSelect={openPhoneme} />
       ) : (
         <IpaCompare onOpen={openPair} />
       )}
       <IpaReferences />
+      <OutlineNav items={outlineItems} onNavigate={navigateTo} />
     </div>
   );
 }

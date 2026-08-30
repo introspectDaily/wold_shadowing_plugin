@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSettings } from './settings';
 
 /**
  * 单个播放器状态：同一时刻只播放一个音频。
  * play(key, url) 时若 key 相同则切换播放/暂停。
+ * 播放速度默认跟随全局设置（settings.playbackRate）。
  */
 export function useAudio() {
   const [playingKey, setPlayingKey] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { settings } = useSettings();
 
   const stop = useCallback(() => {
     audioRef.current?.pause();
@@ -23,6 +26,7 @@ export function useAudio() {
       url: string,
       handlers?: { onEnded?: () => void; onError?: () => void },
       startAtSeconds = 0,
+      rate?: number,
     ) => {
       if (playingKey === key) {
         stop();
@@ -31,6 +35,8 @@ export function useAudio() {
       audioRef.current?.pause();
       const audio = new Audio(url);
       audio.preload = 'auto';
+      // 播放速度：优先调用方指定，否则用全局设置
+      audio.playbackRate = rate ?? settings.playbackRate;
       audioRef.current = audio;
       audio.onplaying = () => setPlayingKey(key);
       audio.onpause = () => {
@@ -81,7 +87,7 @@ export function useAudio() {
         startPlay();
       }
     },
-    [playingKey, stop],
+    [playingKey, stop, settings.playbackRate],
   );
 
   useEffect(() => stop, [stop]);

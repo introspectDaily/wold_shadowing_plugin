@@ -177,7 +177,7 @@ export const VOWEL_PHONEMES: Phoneme[] = [
     category: monophthongCategory,
     type: 'vowel',
     description:
-      '最轻的「模糊音」，口腔放松、几乎不费力气。常出现在非重读音节，如 about 的 a。',
+      '最轻的「模糊音」（短音），口腔放松、几乎不费力气，时值很短。常出现在非重读音节，如 about 的 a、sofa 末尾的 a。与它对应的长元音是 /ɜː/（如 bird）。',
     words: [
       { word: 'about', phonetic: '/əˈbaʊt/' },
       { word: 'sofa', phonetic: '/ˈsəʊfə/' },
@@ -862,6 +862,76 @@ export const CONSONANT_PHONEMES: Phoneme[] = [
       { word: 'white', phonetic: '/waɪt/' },
     ],
   },
+  {
+    symbol: '/tr/',
+    subcategory: affricateSub,
+    ref: REF_CONSONANT,
+    name: '清破擦 /tr/',
+    category: consonantCategory,
+    type: 'consonant',
+    description:
+      '由 /t/ 滑向 /r/，舌尖抵上齿龈后快速放开，气流冲出。如 tree、train、try。',
+    words: [
+      { word: 'tree', phonetic: '/triː/' },
+      { word: 'train', phonetic: '/treɪn/' },
+      { word: 'try', phonetic: '/traɪ/' },
+      { word: 'truck', phonetic: '/trʌk/' },
+      { word: 'true', phonetic: '/truː/' },
+      { word: 'travel', phonetic: '/ˈtrævl/' },
+    ],
+  },
+  {
+    symbol: '/ts/',
+    subcategory: affricateSub,
+    ref: REF_CONSONANT,
+    name: '清破擦 /ts/',
+    category: consonantCategory,
+    type: 'consonant',
+    description:
+      '由 /t/ 滑向 /s/，舌尖抵上齿龈后放开成摩擦。常见于复数/第三人称词尾。如 cats、hats、students。',
+    words: [
+      { word: 'cats', phonetic: '/kæts/' },
+      { word: 'hats', phonetic: '/hæts/' },
+      { word: 'students', phonetic: '/ˈstjuːdənts/' },
+      { word: 'boats', phonetic: '/bəʊts/' },
+      { word: 'lights', phonetic: '/laɪts/' },
+    ],
+  },
+  {
+    symbol: '/dr/',
+    subcategory: affricateSub,
+    ref: REF_CONSONANT,
+    name: '浊破擦 /dr/',
+    category: consonantCategory,
+    type: 'consonant',
+    description:
+      '由 /d/ 滑向 /r/，与 /tr/ 位置相同但声带振动（浊音）。如 drive、dream、drink。',
+    words: [
+      { word: 'drive', phonetic: '/draɪv/' },
+      { word: 'dream', phonetic: '/driːm/' },
+      { word: 'drink', phonetic: '/drɪŋk/' },
+      { word: 'dress', phonetic: '/dres/' },
+      { word: 'dry', phonetic: '/draɪ/' },
+      { word: 'drop', phonetic: '/drɒp/' },
+    ],
+  },
+  {
+    symbol: '/dz/',
+    subcategory: affricateSub,
+    ref: REF_CONSONANT,
+    name: '浊破擦 /dz/',
+    category: consonantCategory,
+    type: 'consonant',
+    description:
+      '由 /d/ 滑向 /z/，与 /ts/ 位置相同但声带振动。常见于复数/第三人称词尾。如 beds、words、reads。',
+    words: [
+      { word: 'beds', phonetic: '/bedz/' },
+      { word: 'words', phonetic: '/wɜːdz/' },
+      { word: 'hands', phonetic: '/hændz/' },
+      { word: 'reads', phonetic: '/riːdz/' },
+      { word: 'cards', phonetic: '/kɑːdz/' },
+    ],
+  },
 ];
 
 export const ALL_PHONEMES: Phoneme[] = [
@@ -881,6 +951,14 @@ export const IPA_PAIRS: IpaPair[] = [
     hint: 'bit — beat',
     description:
       '两者舌头位置接近，但 /ɪ/ 更短更松，/iː/ 更长更紧、嘴角拉得更开。',
+  },
+  {
+    a: '/ə/',
+    b: '/ɜː/',
+    label: '短 /ə/ 与长 /ɜː/',
+    hint: 'about — bird',
+    description:
+      '/ə/ 是短而轻的「模糊音」，常出现在非重读音节；/ɜː/ 是它的长元音，发同样的中部舌位但时值更长、更饱满（英式常带轻微卷舌）。',
   },
   {
     a: '/e/',

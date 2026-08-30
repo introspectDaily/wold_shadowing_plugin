@@ -7,12 +7,15 @@ export interface Settings {
   sourceSkipMs: number;
   /** 播放时跳过的毫秒数（兼容已保存的旧录音） */
   playbackSkipMs: number;
+  /** 标准发音 / 跟读回放的播放速度（0.5 ~ 2.0） */
+  playbackRate: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   noDuEnabled: true,
   sourceSkipMs: 250,
   playbackSkipMs: 150,
+  playbackRate: 1,
 };
 
 const KEY = 'settings';
@@ -54,4 +57,20 @@ export function useSettings() {
   };
 
   return { settings, setSetting, refresh };
+}
+
+/** 播放速度可选档位（快速选择） */
+export const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+/** 播放速度允许的最小值 */
+export const PLAYBACK_RATE_MIN = 0.25;
+/** 播放速度允许的最大值 */
+export const PLAYBACK_RATE_MAX = 3;
+/** 滑块的步进 */
+export const PLAYBACK_RATE_STEP = 0.05;
+
+/** 将播放速度限制在合法范围内 */
+export function clampPlaybackRate(v: number): number {
+  if (!Number.isFinite(v)) return 1;
+  return Math.min(PLAYBACK_RATE_MAX, Math.max(PLAYBACK_RATE_MIN, v));
 }
