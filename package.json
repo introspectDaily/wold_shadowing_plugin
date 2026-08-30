@@ -1,0 +1,33 @@
+{
+  "name": "word-shadowing",
+  "description": "单词跟读 - 标准发音、跟读录音、回放、标记与记忆管理",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt --mode development",
+    "dev:firefox": "wxt -b firefox --mode development",
+    "build": "wxt build --mode production",
+    "build:dev": "wxt build --mode development",
+    "build:firefox": "wxt build -b firefox --mode production",
+    "zip": "wxt zip --mode production",
+    "compile": "tsc --noEmit",
+    "test": "vitest run",
+    "postinstall": "wxt prepare",
+    "icons": "node scripts/generate-icons.mjs"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.2.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@wxt-dev/module-react": "^1.2.2",
+    "typescript": "^5.9.3",
+    "vite": "^8.1.5",
+    "vitest": "^4.1.11",
+    "wxt": "^0.21.4"
+  }
+}

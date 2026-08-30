@@ -1,0 +1,46 @@
+/* 内嵌在有道页面里的紧凑跟读面板样式 */
+body {
+  background: #fff;
+  overflow-y: auto;
+}
+
+.widget {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.widget-word {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.widget-word-text {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.widget-settings-btn {
+  margin-left: auto;
+  width: 26px;
+  height: 26px;
+}
+
+.widget-placeholder {
+  padding: 40px 18px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.widget-placeholder p {
+  margin: 0 0 6px;
+}
+
+.widget .pronounce-bar {
+  margin-bottom: 0;
+}
