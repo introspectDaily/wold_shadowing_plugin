@@ -3,16 +3,18 @@ import { Icon } from './Icon';
 import { WordList } from './WordList';
 import { WordDetail } from './WordDetail';
 import { MemoryReview } from './MemoryReview';
+import { IpaTeaching } from './IpaTeaching';
 import { useWords } from '../hooks/useWords';
 import { useSettings } from '../lib/settings';
 import { addWord, clearWords, removeWord } from '../lib/words';
 import { clearAllData, deleteRecordingsForWord } from '../lib/db';
 import { normalizeWord } from '../lib/ids';
 
-type Section = 'words' | 'review' | 'settings';
+type Section = 'words' | 'ipa' | 'review' | 'settings';
 
-const NAV: { key: Section; label: string; icon: 'book' | 'repeat' | 'more' }[] = [
+const NAV: { key: Section; label: string; icon: 'book' | 'spark' | 'repeat' | 'more' }[] = [
   { key: 'words', label: '单词本', icon: 'book' },
+  { key: 'ipa', label: '音标教学', icon: 'spark' },
   { key: 'review', label: '记忆复习', icon: 'repeat' },
   { key: 'settings', label: '设置', icon: 'more' },
 ];
@@ -124,6 +126,8 @@ export function StandaloneApp() {
               />
             </div>
           ))}
+
+        {section === 'ipa' && <IpaTeaching />}
 
         {section === 'review' && (
           <MemoryReview

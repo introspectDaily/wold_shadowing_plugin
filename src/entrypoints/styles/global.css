@@ -818,3 +818,344 @@ input {
 .app-main::-webkit-scrollbar-track {
   background: transparent;
 }
+
+
+/* ─── 音标教学 ─────────────────────────────────── */
+
+.ipa-teaching .ipa-tabs {
+  margin-bottom: 16px;
+}
+
+.ipa-intro {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.7;
+  margin: 0 0 16px;
+}
+
+.ipa-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 8px;
+}
+
+.ipa-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fbfcfe;
+  transition: border-color 0.15s, transform 0.1s, background 0.15s;
+}
+
+.ipa-tile:hover {
+  border-color: var(--primary);
+  background: var(--primary-weak);
+  transform: translateY(-1px);
+}
+
+.ipa-tile-symbol {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  font-family: 'Times New Roman', Georgia, serif;
+}
+
+.ipa-tile-word {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.ipa-hint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* 音标分组：单元音细分长/短元音 */
+
+.ipa-group {
+  margin-bottom: 16px;
+}
+
+.ipa-group:last-child {
+  margin-bottom: 0;
+}
+
+.ipa-group-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-weak);
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+
+/* 音标详情 */
+
+.ipa-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ipa-detail-title {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.phoneme-body.compact .ipa-word-grid {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+.phoneme-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.ipa-symbol-lg {
+  font-size: 46px;
+  font-weight: 800;
+  color: var(--primary);
+  font-family: 'Times New Roman', Georgia, serif;
+  line-height: 1;
+}
+
+.ipa-detail-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ipa-name {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ipa-meta-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ipa-type-tag {
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+.ipa-type-vowel {
+  background: var(--primary-weak);
+  color: var(--primary);
+}
+
+.ipa-type-consonant {
+  background: #e9f8ef;
+  color: var(--success);
+}
+
+.ipa-subcat {
+  font-size: 11px;
+  color: var(--muted);
+  background: #f0f1f5;
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+.ipa-description {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-2);
+  margin: 0 0 12px;
+}
+
+.ipa-word-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.ipa-word-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fbfcfe;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ipa-word-top {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ipa-word-text {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.ipa-word-phonetic {
+  font-size: 14px;
+  color: var(--text-2);
+  font-family: 'Times New Roman', Georgia, serif;
+}
+
+.ipa-word-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.ipa-word-actions .accent-btn {
+  padding: 4px 10px;
+}
+
+/* 易混淆对比：并排两列展示 */
+
+.ipa-pair-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ipa-pair {
+  margin-bottom: 0;
+}
+
+.ipa-pair-head {
+  margin-bottom: 8px;
+}
+
+.ipa-pair-label {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.ipa-pair-hint {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'Times New Roman', Georgia, serif;
+  margin-left: 8px;
+}
+
+.ipa-pair-desc {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+
+.ipa-compare-table {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ipa-compare-col {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fbfcfe;
+  padding: 12px;
+}
+
+@media (max-width: 720px) {
+  .ipa-compare-table {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── 音标对比：进入跟读 ─────────────────────────── */
+
+.enter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.enter-btn:hover {
+  background: #4338ca;
+}
+
+.ipa-pair-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ipa-pair-detail .ipa-pair-desc {
+  max-width: 720px;
+}
+
+/* 跟读卡片 */
+
+.ws-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.word-shadow-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px;
+}
+
+.ws-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.ws-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ws-word {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.ws-phonetic {
+  font-size: 14px;
+  color: var(--text-2);
+  font-family: 'Times New Roman', Georgia, serif;
+}
+
+.ws-pronounce {
+  display: flex;
+  gap: 6px;
+}
+
+.ws-pronounce .accent-btn {
+  padding: 4px 10px;
+}
+
+.ipa-pair-detail .ipa-compare-col {
+  padding: 14px;
+}

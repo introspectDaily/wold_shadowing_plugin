@@ -1,5 +1,6 @@
 import { Icon } from './Icon';
 import { useAudio } from '../lib/useAudio';
+import { playCachedAudio } from '../lib/audioCache';
 import { speakWithBrowser, youdaoAudioUrl } from '../lib/dict';
 
 interface PronounceBarProps {
@@ -22,13 +23,9 @@ export function PronounceBar({
 
   const onPlay = (accent: 'us' | 'uk') => {
     const key = `${accent}-${word}`;
-    if (audio.isPlaying(key)) {
-      audio.stop();
-      return;
-    }
-    audio.play(key, youdaoAudioUrl(word, accent), {
-      onError: () => speakWithBrowser(word, accent),
-    });
+    void playCachedAudio(audio, key, youdaoAudioUrl(word, accent), () =>
+      speakWithBrowser(word, accent),
+    );
   };
 
   return (
