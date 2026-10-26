@@ -2,6 +2,7 @@
   "name": "word-shadowing",
   "description": "单词跟读 - 标准发音、跟读录音、回放、标记与记忆管理",
   "private": true,
+  "license": "Apache-2.0",
   "version": "0.1.0",
   "type": "module",
   "packageManager": "pnpm@11.15.1",

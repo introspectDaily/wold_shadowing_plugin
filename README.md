@@ -3,6 +3,7 @@
 [![CI](https://github.com/introspectDaily/wold_shadowing_plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/introspectDaily/wold_shadowing_plugin/actions/workflows/ci.yml)
 [![Release](https://github.com/introspectDaily/wold_shadowing_plugin/actions/workflows/release.yml/badge.svg)](https://github.com/introspectDaily/wold_shadowing_plugin/actions/workflows/release.yml)
 [![Latest Release](https://img.shields.io/github/v/release/introspectDaily/wold_shadowing_plugin)](https://github.com/introspectDaily/wold_shadowing_plugin/releases/latest)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 一个浏览器插件（Chrome Manifest V3）：查单词 → 听标准发音 → 跟读录音 → 回放对比 → 标记常用跟读 → 按间隔重复记忆。
 
@@ -130,4 +131,27 @@ src/
     db.ts              # IndexedDB（录音 blob）
     words.ts           # 单词本 + 间隔重复逻辑
     dict.ts            # 词典 / 标准发音服务
+```
+
+## 开源协议
+
+本项目基于 [Apache License 2.0](LICENSE) 开源。
+
+Copyright 2026 introspectDaily
+
+你可以自由地使用、修改、分发本项目（包括商用），但需保留版权声明与许可声明，
+并附带一份 [LICENSE](LICENSE) 副本；若修改了文件，需在文件中标明已修改。
+
+```
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 ```
