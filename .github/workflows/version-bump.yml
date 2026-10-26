@@ -1,0 +1,98 @@
+name: Bump Version
+
+# 手动触发：自动提升 package.json 版本 → 提交 → 打 tag → 复用 release.yml 构建并发布。
+# 版本号唯一来源是 package.json，wxt.config.ts 会把它注入到 manifest.version。
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: '版本提升类型'
+        type: choice
+        required: true
+        default: patch
+        options:
+          - patch
+          - minor
+          - major
+          - prepatch
+          - preminor
+          - premajor
+          - prerelease
+      preid:
+        description: '预发布标识（仅 pre* 类型使用，如 beta / alpha）'
+        type: string
+        required: false
+        default: beta
+
+permissions:
+  contents: write
+
+concurrency:
+  group: version-bump
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    name: Bump & Tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.bump.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sanity check before bump
+        run: |
+          pnpm compile
+          pnpm test
+
+      - name: Bump version and tag
+        id: bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          case "${{ inputs.bump }}" in
+            pre*)
+              npm version "${{ inputs.bump }}" --preid "${{ inputs.preid }}" -m "chore(release): v%s"
+              ;;
+            *)
+              npm version "${{ inputs.bump }}" -m "chore(release): v%s"
+              ;;
+          esac
+
+          VERSION="$(node -p "require('./package.json').version")"
+          TAG="v$VERSION"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "新版本：$VERSION（tag: $TAG）"
+
+      - name: Push commit and tag
+        run: |
+          TAG="${{ steps.bump.outputs.tag }}"
+          git push origin "HEAD:${{ github.ref_name }}"
+          git push origin "refs/tags/$TAG"
+          echo "已推送 ${{ github.ref_name }} 与 $TAG"
+
+  release:
+    name: Release
+    needs: bump
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.bump.outputs.tag }}

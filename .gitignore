@@ -1,7 +1,12 @@
 node_modules
 .pnpm-store
 dist
+.output
 .wxt
 dev
+.env
+.env.*
+!.env.example
 .DS_Store
 *.log
+*.zip

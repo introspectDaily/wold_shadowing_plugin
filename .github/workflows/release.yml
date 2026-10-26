@@ -1,0 +1,155 @@
+name: Release
+
+# 三种触发方式：
+#   1. push tag v*.*.*   —— 手动打 tag 后 push
+#   2. workflow_dispatch —— 在 Actions 页面重跑发布（留空 tag 则使用最近的 tag）
+#   3. workflow_call     —— 由 version-bump.yml 复用（自动升版本后发版）
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要发布的 tag（如 v0.2.0）；留空则使用最近的 tag'
+        type: string
+        required: false
+  workflow_call:
+    inputs:
+      tag:
+        description: '要发布的 tag'
+        type: string
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build & Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tag
+        id: tag
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          TAG="$INPUT_TAG"
+          if [ -z "$TAG" ]; then
+            case "$REF_NAME" in
+              v*) TAG="$REF_NAME" ;;
+            esac
+          fi
+          if [ -z "$TAG" ]; then
+            TAG="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
+          fi
+          if [ -z "$TAG" ]; then
+            echo "::error::无法确定发布 tag，请指定 tag 输入（例如 v0.2.0）"
+            exit 1
+          fi
+          git checkout --force "refs/tags/$TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "发布 tag：$TAG"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify version consistency
+        env:
+          TAG_VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          echo "package.json = $PKG_VERSION / tag = $TAG_VERSION"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::package.json 版本 ($PKG_VERSION) 与 tag ($TAG_VERSION) 不一致"
+            exit 1
+          fi
+
+      - name: Type check
+        run: pnpm compile
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build Chrome (MV3)
+        run: pnpm build
+
+      - name: Build Firefox (MV2)
+        run: pnpm build:firefox
+
+      - name: Package zips
+        run: pnpm zip:all
+
+      - name: Verify packaged manifests
+        env:
+          TAG_VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          for dir in dist/chrome-mv3 dist/firefox-mv2; do
+            V="$(node -p "require('./$dir/manifest.json').version")"
+            echo "$dir -> $V"
+            if [ "$V" != "$TAG_VERSION" ]; then
+              echo "::error::$dir 版本与 tag 不一致"
+              exit 1
+            fi
+          done
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum *.zip > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-${{ steps.tag.outputs.tag }}
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ steps.tag.outputs.tag }}
+          generate_release_notes: true
+          prerelease: ${{ contains(steps.tag.outputs.version, '-') }}
+          fail_on_unmatched_files: true
+          files: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+
+      # —— 可选：自动上架商店 ——
+      # 需要配置 Secrets：CWS_EXTENSION_ID / CWS_CLIENT_ID / CWS_CLIENT_SECRET / CWS_REFRESH_TOKEN
+      # - name: Publish to Chrome Web Store
+      #   if: ${{ !contains(steps.tag.outputs.version, '-') }}
+      #   uses: mobilefirstllc/cws-publish@latest
+      #   with:
+      #     action: publish
+      #     extension_id: ${{ secrets.CWS_EXTENSION_ID }}
+      #     client_id: ${{ secrets.CWS_CLIENT_ID }}
+      #     client_secret: ${{ secrets.CWS_CLIENT_SECRET }}
+      #     refresh_token: ${{ secrets.CWS_REFRESH_TOKEN }}
+      #     zip_file: dist/word-shadowing-${{ steps.tag.outputs.version }}-chrome.zip

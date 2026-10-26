@@ -4,6 +4,18 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "packageManager": "pnpm@11.15.1",
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/introspectDaily/wold_shadowing_plugin.git"
+  },
+  "homepage": "https://github.com/introspectDaily/wold_shadowing_plugin#readme",
+  "bugs": {
+    "url": "https://github.com/introspectDaily/wold_shadowing_plugin/issues"
+  },
   "scripts": {
     "dev": "wxt --mode development",
     "dev:firefox": "wxt -b firefox --mode development",
@@ -11,8 +23,11 @@
     "build:dev": "wxt build --mode development",
     "build:firefox": "wxt build -b firefox --mode production",
     "zip": "wxt zip --mode production",
+    "zip:firefox": "wxt zip -b firefox --mode production",
+    "zip:all": "pnpm zip && pnpm zip:firefox",
     "compile": "tsc --noEmit",
     "test": "vitest run",
+    "verify": "pnpm compile && pnpm test",
     "postinstall": "wxt prepare",
     "icons": "node scripts/generate-icons.mjs"
   },

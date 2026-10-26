@@ -1,4 +1,5 @@
 import { defineConfig } from 'wxt';
+import pkg from './package.json' with { type: 'json' };
 
 const BASE_NAME = '单词跟读';
 const DESCRIPTION =
@@ -12,8 +13,9 @@ export default defineConfig({
     return {
       name: isDev ? `${BASE_NAME} (Dev)` : BASE_NAME,
       description: DESCRIPTION,
-      version: '0.1.0',
-      version_name: isDev ? '0.1.0-dev' : '0.1.0',
+      // 版本号唯一来源：package.json（由 GitHub Actions 的 version-bump 流程维护）
+      version: pkg.version,
+      version_name: isDev ? `${pkg.version}-dev` : pkg.version,
       permissions: ['storage', 'contextMenus', 'sidePanel', 'unlimitedStorage'],
       host_permissions: [
         'https://api.dictionaryapi.dev/*',

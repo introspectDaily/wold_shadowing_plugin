@@ -3,6 +3,7 @@
   "compilerOptions": {
     "types": ["chrome"],
     "jsx": "react-jsx",
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true
   }
 }

@@ -26,14 +26,13 @@
 
 ## 安装（Chrome / Edge 等 Chromium 浏览器）
 
-已编译产物在 `dist/chrome-mv3/`：
+**推荐：从 [Releases](https://github.com/introspectDaily/wold_shadowing_plugin/releases/latest) 下载**
+`word-shadowing-<版本>-chrome.zip`，解压后按下面步骤加载；或直接加载本地构建的 `dist/chrome-mv3/` 目录：
 
 1. 打开 `chrome://extensions`
 2. 打开右上角「开发者模式」
 3. 点「加载已解压的扩展程序」
-4. 选择本项目的 `dist/chrome-mv3` 目录
-
-也可以解压 `dist/word-shadowing-0.1.0-chrome.zip` 后再加载。
+4. 选择解压后的目录（或本项目的 `dist/chrome-mv3` 目录）
 
 > 首次使用录音功能时，浏览器会请求麦克风权限，请允许。
 
@@ -56,11 +55,59 @@
 
 ```bash
 pnpm install
-pnpm dev        # 开发模式（自动打开浏览器）
-pnpm build      # 构建到 dist/chrome-mv3
-pnpm zip        # 打包 zip
-pnpm compile    # 类型检查
+pnpm dev            # 开发模式（自动打开浏览器）
+pnpm build          # 构建 Chrome 到 dist/chrome-mv3
+pnpm build:firefox  # 构建 Firefox 到 dist/firefox-mv2
+pnpm zip:all        # 打包 Chrome + Firefox zip
+pnpm compile        # 类型检查
+pnpm test           # 单元测试
+pnpm verify         # 类型检查 + 单元测试
 ```
+
+## 版本管理与发布
+
+版本号唯一来源是 `package.json` 的 `version`，`wxt.config.ts` 会把它注入到
+`manifest.version` / `manifest.version_name`，因此**不需要**再手动改任何 manifest 里的版本。
+
+整个发布链路全部在 GitHub Actions 上完成：
+
+| 工作流 | 触发 | 作用 |
+| --- | --- | --- |
+| `ci.yml` | push 到 `main` / PR / 手动 | 类型检查 + 单元测试 + Chrome/Firefox 构建，产物上传为 artifact |
+| `version-bump.yml` | 手动（Actions → Bump Version → Run workflow） | 选择 patch/minor/major/pre*，自动 `npm version` → 提交 → 打 `v*` tag → 推送 → 调用 `release.yml` |
+| `release.yml` | push `v*.*.*` tag / 手动指定 tag / 被 `version-bump.yml` 复用 | 校验版本一致性 → 构建 → 打包 zip → 生成 SHA256SUMS → 创建 GitHub Release 并附上产物 |
+
+### 发一个正式版
+
+在 GitHub 仓库页面：**Actions → Bump Version → Run workflow**，选择 `patch` / `minor` / `major` 即可。
+流水线会自动完成「改版本号 → 打 tag → 构建 → 发布 Release」。
+
+### 发一个预发布版
+
+同样入口，`bump` 选 `prerelease` / `prepatch` / `preminor` / `premajor`，`preid` 填 `beta` 之类。
+tag 里带 `-` 的会被自动标记为 GitHub 的 prerelease。
+
+### 手动打 tag 发布
+
+```bash
+npm version minor        # 会改 package.json 并打 vX.Y.Z tag
+# 或者直接： git tag v0.2.0
+git push --follow-tags
+```
+
+推送 tag 后 `release.yml` 自动运行，产物：
+
+- `word-shadowing-<版本>-chrome.zip` —— Chrome / Edge 安装包（解压后「加载已解压的扩展程序」）
+- `word-shadowing-<版本>-firefox.zip` —— Firefox 安装包
+- `word-shadowing-<版本>-sources.zip` —— AMO 要求的上架源码包
+- `SHA256SUMS.txt` —— 校验和
+
+> 注：用 `GITHUB_TOKEN` 推送的 tag 不会再触发 `push` 事件（GitHub 的防递归机制），
+> 所以 `version-bump.yml` 是通过复用 `release.yml`（`workflow_call`）来发版的，无需额外 PAT。
+
+### 可选：自动上架商店
+
+`release.yml` 末尾预留了 Chrome Web Store 的注释步骤，配置对应 Secrets 后取消注释即可。
 
 项目结构：
 
