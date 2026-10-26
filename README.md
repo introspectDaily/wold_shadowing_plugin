@@ -1,5 +1,9 @@
 # 单词跟读（Word Shadowing）
 
+[![CI](https://github.com/introspectDaily/wold_shadowing_plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/introspectDaily/wold_shadowing_plugin/actions/workflows/ci.yml)
+[![Release](https://github.com/introspectDaily/wold_shadowing_plugin/actions/workflows/release.yml/badge.svg)](https://github.com/introspectDaily/wold_shadowing_plugin/actions/workflows/release.yml)
+[![Latest Release](https://img.shields.io/github/v/release/introspectDaily/wold_shadowing_plugin)](https://github.com/introspectDaily/wold_shadowing_plugin/releases/latest)
+
 一个浏览器插件（Chrome Manifest V3）：查单词 → 听标准发音 → 跟读录音 → 回放对比 → 标记常用跟读 → 按间隔重复记忆。
 
 相当于“网页版有道词典 + 跟读练习 + 单词记忆本”。
