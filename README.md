@@ -21,6 +21,7 @@
 - **记忆功能**：忘记 / 模糊 / 记得 / 简单 四档复习，自动计算下次复习时间（间隔重复），到期标为“待复习”
 - **划词查询**：选中网页里的英文单词 → 右键 → 「在单词跟读中查询」，自动打开侧边栏
 - **设置**：弹窗 / 侧边栏 / 有道页面面板右上角都有设置入口，可开关「消除跟读录音开头的“du”杂音」。默认开启：录音在源头就不录入开头的瞬态杂音，旧录音播放时也会自动跳过；关闭则完全按麦克风原始声音录制
+- **无限画布笔记**（新）：OneNote 形态的笔记本 —— 笔记本 / 分区 / 页三层，页面是无边界的画布，可以随手放笔记卡片、标题、待办和图片，支持缩放平移、框选、拖拽、缩放、撤销重做，全部存在本地。入口：设置页左侧导航「笔记画布」，独立开一个标签页
 
 ## 界面
 
@@ -67,7 +68,47 @@ pnpm zip:all        # 打包 Chrome + Firefox zip
 pnpm compile        # 类型检查
 pnpm test           # 单元测试
 pnpm verify         # 类型检查 + 单元测试
+pnpm canvas:shot    # 无头浏览器跑一遍画布交互并截图（先 pnpm build）
 ```
+
+> `canvas:shot` 会启动真实浏览器加载扩展，做「新建笔记 / 输入中文 / 删除 / 撤销 / 刷新验证持久化」并逐步截图到 `dev/canvas-shots/`。
+>
+> ⚠️ Chrome 137+ 的官方版本移除了 `--load-extension` 标志，脚本会自动优先使用 Chrome for Testing / Chromium（Playwright 缓存里的那个）。`scripts/e2e-test.mjs` 同理，用官方 Chrome 跑会加载不到扩展。
+
+## 无限画布笔记
+
+入口：`options.html`（设置页）左侧导航 →「笔记画布」，会打开独立的扩展页面 `canvas.html`。
+
+**当前能力（P0）**
+
+- 结构：`笔记本 → 分区 → 页`，左栏切页面、上方切分区，双击文字可重命名
+- 节点：笔记 / 标题 / 待办 / 图片；双击节点进入编辑，拖拽移动，选中后 8 点缩放
+- 画布：无限平移缩放、Shift 框选、多选、小地图、缩放控件、适应画布
+- 编辑：Ctrl/Cmd+Z 撤销、Shift+Ctrl/Cmd+Z 重做、Delete 删除；新建节点自动避开已有节点
+- 存储：IndexedDB（`word-shadowing-canvas`），400ms 防抖落盘，切页/刷新不丢；图片以 Blob 存 `assets`，节点只存 `assetId`
+- 中文输入：笔记文字是**真实 textarea**，走浏览器原生 IME，不做 canvas 绘字
+
+**结构设计（为后续 PDF 做准备）**
+
+```
+src/lib/canvas/
+  types.ts    # 节点数据模型（kind: note/heading/todo/image，可扩展 ink / pdf-crop）
+  db.ts       # IndexedDB：notebooks / sections / pages / page-nodes / assets
+  model.ts    # 工厂函数、默认尺寸、自动避让落点
+src/components/canvas/
+  CanvasApp.tsx / Sidebar.tsx / SectionTabs.tsx
+  FlowCanvas.tsx  # 画布内核（React Flow）+ 撤销栈 + 落盘
+  NoteNode.tsx    # 文本类节点（真 textarea）
+  ImageNode.tsx   # 图片节点 —— PDF 裁切块的预演
+```
+
+新增一种节点类型 = 在 `types.ts` 加 data 类型 + 在 `FlowCanvas` 的 `nodeTypes` 里注册组件，画布内核不用动。
+
+**后续路线**
+
+- P1 笔迹层：`perfect-freehand` + PointerEvent 压感
+- P2 A4 分页模式：同一画布内核切「固定页面」布局
+- P3 PDF：`pdfjs-dist` 渲染 → 版面分析（PaddleOCR Layout / PP-Structure）→ 自动裁切 + 人工框选 → 变成画布上的 `pdf-crop` 节点
 
 ## 版本管理与发布
 

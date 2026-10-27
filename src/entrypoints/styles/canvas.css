@@ -1,0 +1,628 @@
+/* 无限画布笔记（OneNote 形态） */
+
+.cv-app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.cv-loading,
+.cv-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ------------------------------- 左栏 ------------------------------- */
+
+.cv-sidebar {
+  width: 236px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+.cv-notebook {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cv-notebook__select {
+  flex: 1;
+  min-width: 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  padding: 6px 4px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.cv-notebook__select:hover {
+  background: var(--bg);
+}
+
+.cv-icon-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cv-icon-btn:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.cv-icon-btn--danger:hover {
+  background: #fdecec;
+  color: var(--danger);
+}
+
+.cv-pages-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 6px 6px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.cv-pages {
+  list-style: none;
+  margin: 0;
+  padding: 0 8px 12px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.cv-pages-empty {
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.cv-page-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 8px 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.cv-page-item:hover {
+  background: var(--bg);
+}
+
+.cv-page-item.active {
+  background: var(--primary-weak);
+}
+
+.cv-page-item.active .cv-page-title {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.cv-page-index {
+  width: 18px;
+  text-align: right;
+  font-size: 11px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.cv-page-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cv-page-title-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  padding: 2px 4px;
+  border: 1px solid var(--primary);
+  border-radius: 5px;
+  outline: none;
+}
+
+.cv-page-del {
+  opacity: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.cv-page-item:hover .cv-page-del {
+  opacity: 1;
+}
+
+.cv-page-del:hover {
+  background: #fdecec;
+  color: var(--danger);
+}
+
+/* ----------------------------- 分区标签 ----------------------------- */
+
+.cv-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cv-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 0 10px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.cv-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: var(--text-2);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.cv-tab:hover {
+  color: var(--text);
+}
+
+.cv-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+.cv-tab-title-input {
+  width: 110px;
+  font-size: 13px;
+  padding: 2px 4px;
+  border: 1px solid var(--primary);
+  border-radius: 5px;
+  outline: none;
+}
+
+.cv-tab-del {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.cv-tab-del:hover {
+  background: #fdecec;
+  color: var(--danger);
+}
+
+.cv-tab-add {
+  padding: 0 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.cv-tab-add:hover {
+  color: var(--primary);
+}
+
+/* ------------------------------ 顶栏 ------------------------------- */
+
+.cv-surface {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cv-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.cv-toolbar__title {
+  min-width: 0;
+  flex: 1;
+}
+
+.cv-title-text {
+  display: inline-block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  padding: 3px 6px;
+  border-radius: 6px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cv-title-text:hover {
+  background: var(--bg);
+}
+
+.cv-title-input {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 3px 6px;
+  width: 240px;
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  outline: none;
+}
+
+.cv-toolbar__tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.cv-btn {
+  padding: 5px 10px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  border: 1px solid transparent;
+  transition: background 0.12s, color 0.12s;
+}
+
+.cv-btn:hover:not(:disabled) {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.cv-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.cv-btn--icon {
+  padding: 5px 8px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.cv-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.cv-zoom {
+  font-size: 11px;
+  color: var(--muted);
+  min-width: 34px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.cv-flow {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+/* ------------------------------ 节点 ------------------------------- */
+
+.cv-node {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(20, 24, 40, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+  transition: box-shadow 0.12s, border-color 0.12s;
+}
+
+.cv-node.is-selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.18), 0 4px 12px rgba(20, 24, 40, 0.1);
+}
+
+.cv-color-default {
+  background: #fff;
+}
+.cv-color-yellow {
+  background: #fffaea;
+  border-color: #f3e3a8;
+}
+.cv-color-blue {
+  background: #eef6ff;
+  border-color: #c7ddf5;
+}
+.cv-color-green {
+  background: #eefaf1;
+  border-color: #c2e6cd;
+}
+.cv-color-pink {
+  background: #fff0f5;
+  border-color: #f5c7d8;
+}
+.cv-color-purple {
+  background: #f5f0ff;
+  border-color: #d9cbf5;
+}
+
+.cv-node-text {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text);
+  cursor: text;
+}
+
+.cv-node--heading {
+  padding: 8px 12px;
+  justify-content: center;
+}
+
+.cv-node--heading .cv-node-text {
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.cv-node--todo {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.cv-node--todo .cv-node-text {
+  font-size: 13.5px;
+}
+
+.cv-node.is-done .cv-node-text {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.cv-todo-box {
+  width: 15px;
+  height: 15px;
+  margin-top: 4px;
+  accent-color: var(--primary);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.cv-node-placeholder {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.cv-node-input {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  resize: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cv-node--heading .cv-node-input {
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.cv-node-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 7px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(20, 24, 40, 0.14);
+}
+
+.cv-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.cv-swatch.is-active {
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.cv-swatch-default {
+  background: #fff;
+}
+.cv-swatch-yellow {
+  background: #ffe98a;
+}
+.cv-swatch-blue {
+  background: #b7d8f7;
+}
+.cv-swatch-green {
+  background: #a9dfb8;
+}
+.cv-swatch-pink {
+  background: #f6b7cd;
+}
+.cv-swatch-purple {
+  background: #cbb8f0;
+}
+
+.cv-node-toolbar__del {
+  margin-left: 2px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  color: var(--danger);
+}
+
+.cv-node-toolbar__del:hover {
+  background: #fdecec;
+}
+
+/* 图片节点 */
+.cv-node--image {
+  padding: 0;
+  background: #f2f3f7;
+  overflow: hidden;
+}
+
+.cv-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  user-select: none;
+}
+
+.cv-image-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.cv-image-del {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.cv-node--image:hover .cv-image-del {
+  opacity: 1;
+}
+
+.cv-image-del:hover {
+  color: var(--danger);
+}
+
+/* 缩放手柄 */
+.cv-resize-line {
+  border-color: var(--primary);
+}
+
+.cv-resize-handle {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 2px;
+  background: var(--surface);
+  border: 1.5px solid var(--primary);
+}
+
+/* React Flow 原生控件微调 */
+.cv-flow .react-flow__controls {
+  box-shadow: var(--shadow);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cv-flow .react-flow__minimap {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.cv-flow .react-flow__attribution {
+  display: none;
+}
+
+/* 空画布引导 */
+.cv-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.cv-hint__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+
+.cv-hint__line {
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--muted);
+}

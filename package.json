@@ -30,9 +30,11 @@
     "test": "vitest run",
     "verify": "pnpm compile && pnpm test",
     "postinstall": "wxt prepare",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "canvas:shot": "node scripts/canvas-shot.mjs"
   },
   "dependencies": {
+    "@xyflow/react": "^12.12.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

@@ -31,6 +31,11 @@ export function StandaloneApp() {
     setSelected(null);
   };
 
+  /** 画布是独立扩展页面，单独开一个标签页，不挤在设置页里 */
+  const openCanvas = () => {
+    void chrome.tabs.create({ url: chrome.runtime.getURL('canvas.html') });
+  };
+
   const openWord = async (raw: string) => {
     const id = normalizeWord(raw);
     if (!id) return;
@@ -75,6 +80,10 @@ export function StandaloneApp() {
               {item.label}
             </button>
           ))}
+          <button type="button" className="nav-item" onClick={openCanvas}>
+            <Icon name="note" size={15} />
+            笔记画布
+          </button>
         </nav>
         <div className="nav-footer">
           v0.1.0

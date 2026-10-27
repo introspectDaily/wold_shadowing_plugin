@@ -22,7 +22,8 @@ export type IconName =
   | 'arrow'
   | 'more'
   | 'spark'
-  | 'expand';
+  | 'expand'
+  | 'note';
 
 const paths: Record<IconName, React.ReactNode> = {
   mic: (
@@ -106,6 +107,14 @@ const paths: Record<IconName, React.ReactNode> = {
       <path d="M9 21H3v-6" />
       <path d="M21 3l-7 7" />
       <path d="M3 21l7-7" />
+    </>
+  ),
+  note: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="3" />
+      <path d="M7 8h10" />
+      <path d="M7 12h10" />
+      <path d="M7 16h6" />
     </>
   ),
 };
