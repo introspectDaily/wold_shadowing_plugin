@@ -15,6 +15,7 @@ import {
   listSections,
   putNotebook,
   putPage,
+  reorderPages as dbReorderPages,
   putSection,
   setMeta,
 } from '../lib/canvas/db';
@@ -268,6 +269,20 @@ export function useCanvasLibrary() {
     [state.sectionId],
   );
 
+  /** 拖拽排序：把 from 位置的页面插到 to 位置 */
+  const reorderPages = useCallback((from: number, to: number) => {
+    if (from === to) return;
+    setState((s) => {
+      const next = [...s.pages];
+      const [moved] = next.splice(from, 1);
+      if (!moved) return s;
+      next.splice(to, 0, moved);
+      const ordered = next.map((p, i) => ({ ...p, order: i }));
+      void dbReorderPages(ordered);
+      return { ...s, pages: ordered };
+    });
+  }, []);
+
   const activePage = state.pages.find((p) => p.id === state.pageId) ?? null;
 
   return {
@@ -285,5 +300,6 @@ export function useCanvasLibrary() {
     createPage,
     renamePage,
     removePage,
+    reorderPages,
   };
 }

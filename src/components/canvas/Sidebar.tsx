@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import { EditableLabel } from './EditableLabel';
 import type { Notebook, Page } from '../../lib/canvas/types';
 
@@ -14,6 +15,7 @@ interface Props {
   onCreatePage: () => void;
   onRenamePage: (id: string, title: string) => void;
   onRemovePage: (id: string) => void;
+  onReorderPages: (from: number, to: number) => void;
 }
 
 /** OneNote 式左栏：上面切笔记本，下面是这一分区里的页面列表 */
@@ -30,8 +32,11 @@ export function Sidebar({
   onCreatePage,
   onRenamePage,
   onRemovePage,
+  onReorderPages,
 }: Props) {
   const current = notebooks.find((n) => n.id === notebookId) ?? null;
+  const dragIndex = useRef<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
 
   return (
     <aside className="cv-sidebar">
@@ -85,9 +90,37 @@ export function Sidebar({
 
       <ul className="cv-pages">
         {pages.map((p, i) => (
-          <li key={p.id}>
+          <li
+            key={p.id}
+            draggable
+            onDragStart={(e) => {
+              dragIndex.current = i;
+              e.dataTransfer.effectAllowed = 'move';
+              // Firefox 需要设置数据才会真正开始拖拽
+              e.dataTransfer.setData('text/plain', String(i));
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'move';
+              setDropIndex(i);
+            }}
+            onDragLeave={() => setDropIndex((d) => (d === i ? null : d))}
+            onDrop={(e) => {
+              e.preventDefault();
+              const from = dragIndex.current;
+              dragIndex.current = null;
+              setDropIndex(null);
+              if (from !== null && from !== i) onReorderPages(from, i);
+            }}
+            onDragEnd={() => {
+              dragIndex.current = null;
+              setDropIndex(null);
+            }}
+          >
             <div
-              className={`cv-page-item ${p.id === pageId ? 'active' : ''}`}
+              className={`cv-page-item ${p.id === pageId ? 'active' : ''} ${
+                dropIndex === i ? 'is-drop-target' : ''
+              }`}
               onClick={() => onSelectPage(p.id)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') onSelectPage(p.id);

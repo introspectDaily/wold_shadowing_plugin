@@ -83,23 +83,31 @@ pnpm canvas:shot    # 无头浏览器跑一遍画布交互并截图（先 pnpm b
 
 - 结构：`笔记本 → 分区 → 页`，左栏切页面、上方切分区，双击文字可重命名
 - 节点：笔记 / 标题 / 待办 / 图片；双击节点进入编辑，拖拽移动，选中后 8 点缩放
+- **富文本**：加粗 / 斜体 / 下划线 / 删除线 / 高亮 / 有序无序列表 / 清除格式，支持富文本粘贴（粘贴内容过白名单清洗）
 - 画布：无限平移缩放、Shift 框选、多选、小地图、缩放控件、适应画布
+- **对齐吸附**：拖拽时自动对齐其他节点的左/中/右、上/中/下，并画出辅助线（阈值 6px）
+- **层级**：节点工具栏可置顶 / 置底
+- **排序**：左栏页面可直接拖拽重排
 - 编辑：Ctrl/Cmd+Z 撤销、Shift+Ctrl/Cmd+Z 重做、Delete 删除；新建节点自动避开已有节点
 - 存储：IndexedDB（`word-shadowing-canvas`），400ms 防抖落盘，切页/刷新不丢；图片以 Blob 存 `assets`，节点只存 `assetId`
-- 中文输入：笔记文字是**真实 textarea**，走浏览器原生 IME，不做 canvas 绘字
+- 中文输入：笔记文字是**真实 contentEditable**，走浏览器原生 IME，不做 canvas 绘字
 
 **结构设计（为后续 PDF 做准备）**
 
 ```
 src/lib/canvas/
-  types.ts    # 节点数据模型（kind: note/heading/todo/image，可扩展 ink / pdf-crop）
-  db.ts       # IndexedDB：notebooks / sections / pages / page-nodes / assets
-  model.ts    # 工厂函数、默认尺寸、自动避让落点
+  types.ts      # 节点数据模型（kind: note/heading/todo/image，可扩展 ink / pdf-crop）
+  db.ts         # IndexedDB：notebooks / sections / pages / page-nodes / assets
+  model.ts      # 工厂函数、默认尺寸、自动避让落点
+  sanitize.ts   # 富文本白名单清洗（扩展页面里必须做，挡掉 script/on* /javascript:）
+  alignment.ts  # 对齐吸附的纯逻辑（有单测）
 src/components/canvas/
   CanvasApp.tsx / Sidebar.tsx / SectionTabs.tsx
-  FlowCanvas.tsx  # 画布内核（React Flow）+ 撤销栈 + 落盘
-  NoteNode.tsx    # 文本类节点（真 textarea）
-  ImageNode.tsx   # 图片节点 —— PDF 裁切块的预演
+  FlowCanvas.tsx      # 画布内核（React Flow）+ 撤销栈 + 落盘
+  NoteNode.tsx        # 文本类节点（真 contentEditable）
+  RichTextEditor.tsx  # 非受控富文本编辑器（受控回写会跳光标）
+  HelperLines.tsx     # 拖拽对齐辅助线
+  ImageNode.tsx       # 图片节点 —— PDF 裁切块的预演
 ```
 
 新增一种节点类型 = 在 `types.ts` 加 data 类型 + 在 `FlowCanvas` 的 `nodeTypes` 里注册组件，画布内核不用动。

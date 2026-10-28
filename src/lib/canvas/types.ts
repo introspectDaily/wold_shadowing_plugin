@@ -30,6 +30,9 @@ export const NOTE_COLORS: { value: NoteColor; label: string }[] = [
 
 export interface NoteData extends Record<string, unknown> {
   kind: NoteKind;
+  /** 富文本 HTML（已过白名单清洗） */
+  html: string;
+  /** 纯文本，用于空内容判断 / 后续全文搜索 */
   text: string;
   color: NoteColor;
   /** 仅 todo 使用 */
@@ -74,6 +77,8 @@ export interface Page {
   title: string;
   createdAt: number;
   updatedAt: number;
+  /** 手动拖拽排序用；没有时回退到 createdAt */
+  order?: number;
   /** 上次离开时的视口，用于回到这一页时恢复位置 */
   viewport?: Viewport;
 }

@@ -31,6 +31,7 @@ export function CanvasApp() {
         onCreatePage={() => void lib.createPage()}
         onRenamePage={lib.renamePage}
         onRemovePage={(id) => void lib.removePage(id)}
+        onReorderPages={lib.reorderPages}
       />
 
       <main className="cv-main">

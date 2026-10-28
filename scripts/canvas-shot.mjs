@@ -383,6 +383,211 @@ async function main() {
     check('双击新建的内容正确', (afterDbl.t || '').includes('双击空白新建的笔记'));
     await shot(page, '05-dblclick');
 
+    // 6) 富文本
+    console.log('\n6) 富文本加粗');
+    const firstNode = await evaluate(
+      page,
+      `(() => { const n = document.querySelector('.cv-node--note'); const r = n.getBoundingClientRect();
+        return { x: Math.round(r.left + 60), y: Math.round(r.top + 30) }; })()`,
+      false,
+    );
+    const dbl = async (x, y) => {
+      for (const clickCount of [1, 2]) {
+        await page.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount });
+        await page.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount });
+      }
+    };
+    await dbl(firstNode.x, firstNode.y);
+    await sleep(600);
+    const hasEditor = await evaluate(page, `!!document.querySelector('.cv-rt')`, false);
+    check('双击进入富文本编辑', hasEditor);
+
+    // 全选正文，然后用「真实」鼠标点加粗（合成事件会让 React Flow 的拖拽处理器拿到 null view）
+    await evaluate(
+      page,
+      `(() => { const ed = document.querySelector('.cv-rt'); ed.focus(); document.execCommand('selectAll'); return true; })()`,
+      false,
+    );
+    const boldRect = await evaluate(
+      page,
+      `(() => { const b = [...document.querySelectorAll('.cv-fmt-btn')].find(x => x.title === '加粗');
+        if (!b) return null; const r = b.getBoundingClientRect();
+        return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }; })()`,
+      false,
+    );
+    if (boldRect) await page.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: boldRect.x, y: boldRect.y, button: 'left', clickCount: 1 });
+    if (boldRect) await page.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: boldRect.x, y: boldRect.y, button: 'left', clickCount: 1 });
+    await sleep(400);
+    const diag = await evaluate(
+      page,
+      `(() => ({ rt: !!document.querySelector('.cv-rt'), fmt: !!document.querySelector('.cv-fmtbar'),
+        active: document.activeElement ? document.activeElement.className : null,
+        sel: !!document.querySelector('.cv-node.is-selected') }))()`,
+      false,
+    );
+    console.log('  diag:', JSON.stringify(diag));
+    const htmlNow = await evaluate(
+      page,
+      `(() => { const el = document.querySelector('.cv-rt'); return el ? el.innerHTML : ''; })()`,
+      false,
+    );
+    console.log('  editor html:', String(htmlNow).slice(0, 120));
+    check('格式工具条存在', boldRect !== null);
+    check('加粗生效', /<b>|font-weight:\s*bold|<strong>/i.test(htmlNow || ''), String(htmlNow).slice(0, 80));
+    await shot(page, '06-richtext');
+    await evaluate(page, `document.activeElement && document.activeElement.blur()`, false);
+    await sleep(500);
+    const storedBold = await evaluate(
+      page,
+      `document.querySelector('.cv-node--note .cv-node-text').innerHTML`,
+      false,
+    );
+    check('失焦后富文本保留', /<b>|font-weight:\s*bold|<strong>/i.test(storedBold || ''));
+
+    // 7) 对齐吸附
+    console.log('\n7) 拖拽对齐吸附');
+    const readNodes = () =>
+      evaluate(
+        page,
+        `[...document.querySelectorAll('.react-flow__node')].map(e => {
+          const m = /translate\\(([-\\d.]+)px,\\s*([-\\d.]+)px\\)/.exec(e.style.transform) || [];
+          return { id: e.dataset.id, x: Math.round(+m[1]), y: Math.round(+m[2]) };
+        })`,
+        false,
+      );
+    const clickAt = async (x, y) => {
+      await page.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
+      await page.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
+    };
+
+    const before = await readNodes();
+    const [na, nb] = before;
+    const startPos = { ...nb };
+    const grab = await evaluate(
+      page,
+      `(() => { const n = document.querySelectorAll('.react-flow__node')[1]; const r = n.getBoundingClientRect();
+        return { x: Math.round(r.left + 30), y: Math.round(r.top + 12) }; })()`,
+      false,
+    );
+
+    await page.send('Input.dispatchMouseEvent', {
+      type: 'mousePressed', x: grab.x, y: grab.y, button: 'left', clickCount: 1,
+    });
+    await sleep(180);
+
+    // 一点点挪到「比对齐位置偏 4px」的地方，再让吸附把它吸回去。
+    // 每步都回读真实位置，避免 CDP 事件被合并导致误差累积。
+    // 直接瞄「完全对齐」，这样即使拖动有 1~2px 误差，也一定落在吸附阈值里
+    let pointerX = grab.x;
+    for (let i = 0; i < 12; i++) {
+      const cur = (await readNodes())[1];
+      const delta = na.x - cur.x;
+      if (Math.abs(delta) <= 2) break;
+      // 指针目标单调推进：即使某次事件被合并，下一次坐标也不同，拖拽能继续
+      pointerX += delta;
+      await page.send('Input.dispatchMouseEvent', {
+        type: 'mouseMoved',
+        x: Math.round(pointerX),
+        y: grab.y,
+        button: 'left',
+        buttons: 1,
+      });
+      await sleep(160);
+    }
+
+    const during = await evaluate(
+      page,
+      `(() => {
+        const guides = document.querySelectorAll('[data-guide]').length;
+        const els = [...document.querySelectorAll('.react-flow__node')];
+        const m = (e) => /translate\\(([-\\d.]+)px,\\s*([-\\d.]+)px\\)/.exec(e.style.transform) || [];
+        return { guides, x0: Math.round(+m(els[0])[1]), x1: Math.round(+m(els[1])[1]) };
+      })()`,
+      false,
+    );
+    await shot(page, '07-alignment');
+    await page.send('Input.dispatchMouseEvent', {
+      type: 'mouseReleased',
+      x: Math.round(pointerX),
+      y: grab.y,
+      button: 'left',
+      clickCount: 1,
+    });
+    await sleep(350);
+    console.log('  drag:', JSON.stringify({ a: na, b: nb, during }));
+    check('拖拽时出现对齐辅助线', during.guides > 0, `guides=${during.guides}`);
+    check('左边缘被吸附到同一 x', Math.abs(during.x1 - during.x0) <= 1, `${during.x0} vs ${during.x1}`);
+    const guidesGone = await evaluate(page, `document.querySelectorAll('[data-guide]').length`, false);
+    check('拖拽结束后辅助线消失', guidesGone === 0, `实际 ${guidesGone}`);
+
+    // 8) 置顶
+    console.log('\n8) 置顶 / 置底');
+    const zBefore = await evaluate(
+      page,
+      `[...document.querySelectorAll('.react-flow__node')].map(e => ({
+        id: e.dataset.id, z: Number(e.style.zIndex || 0) }))`,
+      false,
+    );
+    const lastRect = await evaluate(
+      page,
+      `(() => { const n = document.querySelectorAll('.react-flow__node')[0]; const r = n.getBoundingClientRect();
+        return { x: Math.round(r.left + 40), y: Math.round(r.top + 20) }; })()`,
+      false,
+    );
+    await clickAt(lastRect.x, lastRect.y);
+    await sleep(350);
+    const toFront = await evaluate(
+      page,
+      `(() => { const b = document.querySelector('.cv-node-toolbar__icon[title="置顶"]');
+        if (!b) return false; b.click(); return true; })()`,
+      false,
+    );
+    await sleep(350);
+    const zAfter = await evaluate(
+      page,
+      `[...document.querySelectorAll('.cv-node')].map(e => Number(getComputedStyle(e.closest('.react-flow__node')).zIndex || 0))`,
+      false,
+    );
+    check('置顶按钮可用', toFront === true);
+    check('置顶后层级提升', Math.max(...zAfter) > Math.max(...zBefore.map((z) => z.z)),
+      `${JSON.stringify(zBefore.map((z) => z.z))} -> ${JSON.stringify(zAfter)}`);
+
+    // 9) 页面拖拽排序
+    console.log('\n9) 页面拖拽排序');
+    await evaluate(page, `document.querySelector('.cv-pages-head .cv-icon-btn').click()`, false);
+    await sleep(500);
+    const pagesBefore = await evaluate(
+      page,
+      `[...document.querySelectorAll('.cv-page-title')].map(e => e.textContent)`,
+      false,
+    );
+    const reordered = await evaluate(
+      page,
+      `(() => {
+        const items = document.querySelectorAll('.cv-pages li');
+        if (items.length < 2) return { ok: false, n: items.length };
+        const dt = new DataTransfer();
+        items[1].dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt }));
+        items[0].dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt }));
+        items[0].dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
+        return { ok: true };
+      })()`,
+      false,
+    );
+    await sleep(600);
+    const pagesAfter = await evaluate(
+      page,
+      `[...document.querySelectorAll('.cv-page-title')].map(e => e.textContent)`,
+      false,
+    );
+    console.log('  pages:', JSON.stringify({ pagesBefore, pagesAfter }));
+    check('新建出第二页', pagesBefore.length >= 2, `实际 ${pagesBefore.length}`);
+    check(
+      '拖拽后顺序改变',
+      pagesAfter.join('|') === [...pagesBefore].reverse().join('|'),
+      `${pagesBefore} -> ${pagesAfter}`,
+    );
+
     if (logs.length) {
       console.log('\n--- console ---\n' + logs.join('\n'));
     }

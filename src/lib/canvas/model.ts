@@ -3,6 +3,7 @@
  * 这样默认尺寸、默认文案只有一处定义。
  */
 import { uid } from '../ids';
+import { textToHtml } from './sanitize';
 import type { CanvasNode, Notebook, NoteKind, Page, Section } from './types';
 
 export function newNotebook(title = '我的笔记本'): Notebook {
@@ -39,7 +40,13 @@ export function newTextNode(
     width: d.w,
     height: d.h,
     zIndex,
-    data: { kind, text: d.text, color: 'default', checked: false },
+    data: {
+      kind,
+      html: d.text ? textToHtml(d.text) : '',
+      text: d.text,
+      color: 'default',
+      checked: false,
+    },
   };
 }
 

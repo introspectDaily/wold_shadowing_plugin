@@ -16,7 +16,9 @@ import '@xyflow/react/dist/style.css';
 import { getPage, getPageNodes, putAsset, putPage, putPageNodes } from '../../lib/canvas/db';
 import { findFreePosition, newImageNode, newTextNode, nextZIndex } from '../../lib/canvas/model';
 import type { CanvasNode, CanvasNodeData, NoteKind, Page } from '../../lib/canvas/types';
+import { textToHtml } from '../../lib/canvas/sanitize';
 import { uid } from '../../lib/ids';
+import { HelperLines, useHelperLines } from './HelperLines';
 import { ImageNodeView } from './ImageNode';
 import { NoteNodeView } from './NoteNode';
 import { NodeActionsContext, type NodeActions } from './nodeActions';
@@ -39,7 +41,16 @@ function serialize(nodes: CanvasNode[]): CanvasNode[] {
 
 function normalize(raw: unknown): CanvasNode[] {
   if (!Array.isArray(raw)) return [];
-  return raw as CanvasNode[];
+  // 老数据只有 text，补出 html 字段（富文本是后加的）
+  return (raw as CanvasNode[]).map((n) => {
+    if (n.data?.kind === 'image') return n;
+    const d = n.data as { html?: string; text?: string; kind: string };
+    if (typeof d.html === 'string' && d.html) return n;
+    return {
+      ...n,
+      data: { ...n.data, html: textToHtml(d.text ?? '') },
+    } as CanvasNode;
+  });
 }
 
 interface FlowCanvasProps {
@@ -174,6 +185,8 @@ function CanvasSurface({ page, onRenamePage }: FlowCanvasProps) {
     setNodes((ns) => applyNodeChanges(changes, ns));
   }, []);
 
+  const { guides, onNodeDrag, onNodeDragStop } = useHelperLines(setNodes, nodesRef);
+
   const actions = useMemo<NodeActions>(
     () => ({
       updateData(id, patch) {
@@ -185,6 +198,18 @@ function CanvasSurface({ page, onRenamePage }: FlowCanvasProps) {
       },
       remove(id) {
         setNodes((ns) => ns.filter((n) => n.id !== id));
+      },
+      bringToFront(id) {
+        setNodes((ns) => {
+          const top = nextZIndex(ns) + 1;
+          return ns.map((n) => (n.id === id ? { ...n, zIndex: top } : n));
+        });
+      },
+      sendToBack(id) {
+        setNodes((ns) => {
+          const bottom = ns.reduce((min, n) => Math.min(min, n.zIndex ?? 0), 0) - 1;
+          return ns.map((n) => (n.id === id ? { ...n, zIndex: bottom } : n));
+        });
       },
       editingId,
       beginEdit(id) {
@@ -355,6 +380,8 @@ function CanvasSurface({ page, onRenamePage }: FlowCanvasProps) {
             edges={[]}
             nodeTypes={nodeTypes}
             onNodesChange={onNodesChange}
+            onNodeDrag={onNodeDrag}
+            onNodeDragStop={onNodeDragStop}
             onMoveEnd={onMoveEnd}
             minZoom={0.2}
             maxZoom={4}
@@ -367,6 +394,7 @@ function CanvasSurface({ page, onRenamePage }: FlowCanvasProps) {
             proOptions={{ hideAttribution: true }}
           >
             <Background variant={BackgroundVariant.Dots} gap={20} size={1.4} color="#c7ccd8" />
+            <HelperLines guides={guides} />
             <Controls showInteractive={false} />
             {nodes.length > 0 && (
               <MiniMap pannable zoomable nodeStrokeWidth={2} />

@@ -161,7 +161,16 @@ export async function listPages(sectionId: string): Promise<Page[]> {
   const all = await run(STORE_PAGES, 'readonly', (tx) =>
     allByIndex<Page>(tx, STORE_PAGES, 'sectionId', sectionId),
   );
-  return all.sort(byCreatedAt);
+  // 有手动排序就按 order，没有就回退到创建时间
+  return all.sort((a, b) => (a.order ?? a.createdAt) - (b.order ?? b.createdAt));
+}
+
+/** 重排列：一次性把新的顺序写回去 */
+export async function reorderPages(pages: Page[]): Promise<void> {
+  await run(STORE_PAGES, 'readwrite', (tx) => {
+    const store = tx.objectStore(STORE_PAGES);
+    pages.forEach((p, i) => store.put({ ...p, order: i }));
+  });
 }
 
 export function putPage(page: Page): Promise<void> {

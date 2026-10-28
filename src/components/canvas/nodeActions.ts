@@ -8,6 +8,8 @@ import type { CanvasNodeData } from '../../lib/canvas/types';
 export interface NodeActions {
   updateData(id: string, patch: Partial<CanvasNodeData>): void;
   remove(id: string): void;
+  bringToFront(id: string): void;
+  sendToBack(id: string): void;
   /** 正在被「工具栏新建」请求进入编辑态的节点 id */
   editingId: string | null;
   beginEdit(id: string): void;
