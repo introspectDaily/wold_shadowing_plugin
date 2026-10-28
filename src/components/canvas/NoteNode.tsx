@@ -70,10 +70,11 @@ export const NoteNodeView = memo(function NoteNodeView({
   /** 刚新建就进入编辑：全选默认文字，一敲键盘就替换，而不是接在后面 */
   const [fresh, setFresh] = useState(false);
 
-  const kind = data.kind === 'image' ? 'note' : data.kind;
-  const html = data.kind === 'image' ? '' : data.html || textToHtml(data.text || '');
-  const text = data.kind === 'image' ? '' : data.text;
-  const color: NoteColor = data.kind === 'image' ? 'default' : data.color;
+  const isNoteKind = data.kind === 'note' || data.kind === 'heading' || data.kind === 'todo';
+  const kind = isNoteKind ? data.kind : 'note';
+  const html = isNoteKind ? data.html || textToHtml(data.text || '') : '';
+  const text = isNoteKind ? data.text : '';
+  const color: NoteColor = isNoteKind ? data.color : 'default';
   const checked = data.kind === 'todo' ? data.checked : false;
 
   // 工具栏新建节点后，自动进入编辑态

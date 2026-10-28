@@ -1,0 +1,4 @@
+# pnpm 11 起，构建脚本放行名单从 package.json 的 pnpm 字段搬到了这里。
+# protobufjs 是 onnxruntime-web 的间接依赖，postinstall 无副作用，放行。
+allowBuilds:
+  protobufjs: true

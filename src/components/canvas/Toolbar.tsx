@@ -11,6 +11,8 @@ interface Props {
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  pdfOpen: boolean;
+  onTogglePdf: () => void;
 }
 
 export function Toolbar({
@@ -22,6 +24,8 @@ export function Toolbar({
   onRedo,
   canUndo,
   canRedo,
+  pdfOpen,
+  onTogglePdf,
 }: Props) {
   const { fitView } = useReactFlow();
   const { zoom } = useViewport();
@@ -49,6 +53,13 @@ export function Toolbar({
         </button>
         <button type="button" className="cv-btn" onClick={onPickImage}>
           图片
+        </button>
+        <button
+          type="button"
+          className={`cv-btn ${pdfOpen ? 'is-active' : ''}`}
+          onClick={onTogglePdf}
+        >
+          PDF
         </button>
 
         <span className="cv-sep" />

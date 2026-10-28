@@ -46,11 +46,21 @@ export default defineConfig({
         },
       ],
       minimum_chrome_version: '116',
+      // onnxruntime-web 需要 WebAssembly 编译权限；MV3 默认 CSP 不允许，
+      // 不开这个开关在扩展里跑布局模型会直接抛 EvalError。
+      content_security_policy: {
+        extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
+      },
     };
   },
   vite: () => ({
     optimizeDeps: {
       entries: ['src/entrypoints/popup/index.html'],
+    },
+    resolve: {
+      // 让 onnxruntime-web 用「外部 wasm」版本：否则它会把 14MB 的 wasm
+      // 内联进产物，和 public/ort/ 下的副本重复，白白多一倍体积。
+      conditions: ['onnxruntime-web-use-extern-wasm', 'browser', 'module', 'import', 'default'],
     },
   }),
   modules: ['@wxt-dev/module-react'],

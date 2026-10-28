@@ -1,4 +1,6 @@
+import { useRef, useState } from 'react';
 import { FlowCanvas } from './FlowCanvas';
+import { PdfPanel, type PdfCropPayload } from './PdfPanel';
 import { SectionTabs } from './SectionTabs';
 import { Sidebar } from './Sidebar';
 import { useCanvasLibrary } from '../../hooks/useCanvasLibrary';
@@ -11,6 +13,14 @@ import { useCanvasLibrary } from '../../hooks/useCanvasLibrary';
  */
 export function CanvasApp() {
   const lib = useCanvasLibrary();
+  const [pdfOpen, setPdfOpen] = useState(false);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const addCropRef = useRef<((payload: PdfCropPayload) => void) | null>(null);
+
+  const openPdfFile = (file: File) => {
+    setPdfFile(file);
+    setPdfOpen(true);
+  };
 
   if (!lib.ready) {
     return <div className="cv-loading">正在打开笔记本…</div>;
@@ -49,11 +59,24 @@ export function CanvasApp() {
             key={lib.activePage.id}
             page={lib.activePage}
             onRenamePage={(title) => lib.renamePage(lib.activePage!.id, title)}
+            pdfOpen={pdfOpen}
+            onTogglePdf={() => setPdfOpen((v) => !v)}
+            addCropRef={addCropRef}
+            onOpenPdfFile={openPdfFile}
           />
         ) : (
           <div className="cv-empty">这个分区还没有页面</div>
         )}
       </main>
+
+      {pdfOpen && (
+        <PdfPanel
+          initialFile={pdfFile}
+          onFileConsumed={() => setPdfFile(null)}
+          onClose={() => setPdfOpen(false)}
+          onAddCrop={(payload) => addCropRef.current?.(payload)}
+        />
+      )}
     </div>
   );
 }

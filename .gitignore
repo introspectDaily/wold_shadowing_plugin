@@ -10,3 +10,5 @@ dev
 .DS_Store
 *.log
 *.zip
+public/models/*.onnx
+public/ort/

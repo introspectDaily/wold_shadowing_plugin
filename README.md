@@ -112,6 +112,34 @@ src/components/canvas/
 
 新增一种节点类型 = 在 `types.ts` 加 data 类型 + 在 `FlowCanvas` 的 `nodeTypes` 里注册组件，画布内核不用动。
 
+## PDF 切块（版面分析在浏览器里跑）
+
+**怎么用**：画布右上角点 **PDF** 打开面板 → 「选择 PDF」；或者**把 PDF 直接拖进画布**（自动打开面板）。面板里自动按版面切块，点区域上的「＋」或右侧列表的「＋」就放到画布上；也可以在页面上**直接拖出选框**人工切。
+
+**切块来源（两级）**
+
+1. **PP-DocLayout-S 布局模型**（PaddleOCR，ONNX，4.9MB，onnxruntime-web 在浏览器里推理）
+   - 23 类版面元素：标题 / 正文 / 图片 / 表格 / 公式 / 图注 / 页眉页脚 / 页码 / 印章…
+   - 输入 480×480 + `scale_factor`，输出 `[N,6]` = `[类别, 分数, x1, y1, x2, y2]`，阈值 0.45
+   - 模型不给文字，文字从 PDF 文字层按覆盖关系补进去，并用文字的真实范围把框撑开（否则每行右边会被切掉）
+2. **文字块聚类**（纯 JS，无模型也能用）
+   - 按基线聚行、按行距和左边缘聚段，双栏论文不会被合成一块
+   - 数字版 PDF 文字层质量很高，这条路径又快又准；扫描件没有文字层就只能靠模型
+
+两条路径的结果是同一套 `Region`，UI 不区分来源。
+
+**开启模型**
+
+```bash
+pnpm fetch:model     # 从 ModelScope 下 PP-DocLayout-S 的 ONNX（约 4.9MB）到 public/models/
+```
+
+不下载也能用（自动回退到文字块分析，面板右上角会显示「文字块模式」）。模型文件不进 git；只有模型存在时才会把 onnxruntime 的 14MB wasm 运行时一起打进扩展（`scripts/sync-ort-assets.mjs` 负责），所以**不装模型时扩展仍然只有 ~2.5MB**。
+
+> MV3 的默认 CSP 不允许 WebAssembly，`wxt.config.ts` 里显式加了 `'wasm-unsafe-eval'`，否则扩展里跑模型会直接抛 `EvalError`。
+
+**后续**：扫描件 / 图片的 OCR（PaddleOCR 识别模型）还没接，现在扫描件能切出区域但没有文字。
+
 **后续路线**
 
 - P1 笔迹层：`perfect-freehand` + PointerEvent 压感

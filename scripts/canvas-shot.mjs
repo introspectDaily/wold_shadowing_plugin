@@ -588,6 +588,168 @@ async function main() {
       `${pagesBefore} -> ${pagesAfter}`,
     );
 
+    // 10) PDF：导入 → 版面切块 → 放到画布
+    console.log('\n10) PDF 切块');
+    await evaluate(
+      page,
+      `[...document.querySelectorAll('.cv-btn')].find(b => b.textContent.trim() === 'PDF').click()`,
+      false,
+    );
+    await sleep(500);
+    const panelOpen = await evaluate(page, `!!document.querySelector('.cv-pdf')`, false);
+    check('PDF 面板能打开', panelOpen);
+
+    // 通过 CDP 给隐藏的 file input 塞文件
+    const doc = await page.send('DOM.getDocument', { depth: -1 });
+    const inputNode = await page.send('DOM.querySelector', {
+      nodeId: doc.result.root.nodeId,
+      selector: '.cv-pdf input[type=file]',
+    });
+    check('找到文件选择框', !!inputNode.result?.nodeId);
+    await page.send('DOM.setFileInputFiles', {
+      nodeId: inputNode.result.nodeId,
+      files: [process.env.PDF_FIXTURE || '/tmp/sample-layout.pdf'],
+    });
+    await sleep(2500);
+
+    const pdfState = await evaluate(
+      page,
+      `(() => ({
+        regions: document.querySelectorAll('.cv-pdf-region').length,
+        status: (document.querySelector('.cv-pdf-status') || {}).textContent || '',
+        mode: (document.querySelector('.cv-pdf-model') || {}).textContent || '',
+        items: [...document.querySelectorAll('.cv-pdf-item__text')].map(e => e.textContent).slice(0, 4),
+      }))()`,
+      false,
+    );
+    console.log('  pdf:', JSON.stringify(pdfState));
+    check('切出多个版面区域', pdfState.regions >= 2, `实际 ${pdfState.regions}`);
+    check('区域带上了文字', (pdfState.items || []).some((t) => t && t.trim().length > 8));
+    await shot(page, '08-pdf-regions');
+
+    const nodesBeforePdf = await evaluate(page, `document.querySelectorAll('.cv-node').length`, false);
+    await evaluate(
+      page,
+      `(() => { const b = document.querySelector('.cv-pdf-region .cv-pdf-add');
+        if (!b) return false; b.click(); return true; })()`,
+      false,
+    );
+    await sleep(900);
+    const pdfNode = await evaluate(
+      page,
+      `(() => ({
+        count: document.querySelectorAll('.cv-node--pdf').length,
+        total: document.querySelectorAll('.cv-node').length,
+        badge: (document.querySelector('.cv-pdf-badge') || {}).textContent || '',
+        hasImg: !!document.querySelector('.cv-pdf-img'),
+      }))()`,
+      false,
+    );
+    console.log('  node:', JSON.stringify(pdfNode));
+    check('PDF 区域放进了画布', pdfNode.count === 1, `实际 ${pdfNode.count}`);
+    check('裁切块带截图', pdfNode.hasImg);
+    check('画布节点数 +1', pdfNode.total === nodesBeforePdf + 1);
+    await shot(page, '09-pdf-node');
+
+    // 再放一块「正文」，检查裁切块在真实文本区域上的可读性
+    const addedText = await evaluate(
+      page,
+      `(() => {
+        // 挑页面上面积最大的那块（通常是最难读的整段正文）
+        const regions = [...document.querySelectorAll('.cv-pdf-region')];
+        if (regions.length === 0) return false;
+        const biggest = regions
+          .map((r) => ({ r, a: r.getBoundingClientRect().width * r.getBoundingClientRect().height }))
+          .sort((x, y) => y.a - x.a)[0];
+        biggest.r.querySelector('.cv-pdf-add').click();
+        return true;
+      })()`,
+      false,
+    );
+    await sleep(900);
+    const textNode = await evaluate(
+      page,
+      `(() => {
+        const n = document.querySelectorAll('.cv-node--pdf')[1];
+        if (!n) return null;
+        const r = n.getBoundingClientRect();
+        return { w: Math.round(r.width), h: Math.round(r.height),
+                 badge: (n.querySelector('.cv-pdf-badge') || {}).textContent,
+                 hasTextBtn: !!n.querySelector('.cv-pdf-textbtn') };
+      })()`,
+      false,
+    );
+    console.log('  text node:', JSON.stringify(textNode), 'added=', addedText);
+    const imgDiag = await evaluate(
+      page,
+      `(() => {
+        const n = document.querySelectorAll('.cv-node--pdf')[1];
+        const img = n && n.querySelector('.cv-pdf-img');
+        const body = n && n.querySelector('.cv-pdf-body');
+        if (!img || !body) return null;
+        const ir = img.getBoundingClientRect(), br = body.getBoundingClientRect();
+        return { natural: [img.naturalWidth, img.naturalHeight],
+                 img: [Math.round(ir.width), Math.round(ir.height)],
+                 body: [Math.round(br.width), Math.round(br.height)],
+                 fit: getComputedStyle(img).objectFit };
+      })()`,
+      false,
+    );
+    console.log('  img diag:', JSON.stringify(imgDiag));
+
+    // 把裁切出来的原始 PNG 落盘，方便直接看裁得准不准
+    const dataUrl = await evaluate(
+      page,
+      `(async () => {
+        const n = document.querySelectorAll('.cv-node--pdf')[1];
+        const img = n.querySelector('.cv-pdf-img');
+        const blob = await (await fetch(img.src)).blob();
+        return await new Promise((res) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(blob); });
+      })()`,
+    );
+    if (typeof dataUrl === 'string') {
+      writeFileSync(join(OUT_DIR, '09c-crop-raw.png'), Buffer.from(dataUrl.split(',')[1], 'base64'));
+      console.log('  📸 原始裁切图已保存 09c-crop-raw.png');
+    }
+    check('正文裁切块按原始比例放（不再固定 420）', (textNode?.w ?? 0) >= 430, `实际 ${textNode?.w}`);
+    check('有文字的区域带「文字」开关', textNode?.hasTextBtn === true);
+    await shot(page, '09b-pdf-text-node');
+
+    // 11) 右键菜单
+    console.log('\n11) 空白处右键菜单');
+    const paneRect = await evaluate(
+      page,
+      `(() => { const p = document.querySelector('.react-flow__pane'); const r = p.getBoundingClientRect();
+        return { x: Math.round(r.left + r.width - 120), y: Math.round(r.top + r.height - 120) }; })()`,
+      false,
+    );
+    await page.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: paneRect.x, y: paneRect.y, button: 'right', clickCount: 1 });
+    await page.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: paneRect.x, y: paneRect.y, button: 'right', clickCount: 1 });
+    await sleep(500);
+    const menuState = await evaluate(
+      page,
+      `(() => { const m = document.querySelector('.cv-menu');
+        return m ? { open: true, items: [...m.querySelectorAll('.cv-menu__item')].map(b => b.textContent) } : { open: false }; })()`,
+      false,
+    );
+    console.log('  menu:', JSON.stringify(menuState));
+    check('右键弹出菜单', menuState.open);
+    check('菜单内容正确', (menuState.items || []).some((t) => t.includes('新建笔记')));
+    await shot(page, '10-context-menu');
+
+    const beforeMenuCreate = await evaluate(page, `document.querySelectorAll('.cv-node').length`, false);
+    await evaluate(
+      page,
+      `[...document.querySelectorAll('.cv-menu__item')].find(b => b.textContent.includes('新建待办')).click()`,
+      false,
+    );
+    await sleep(600);
+    await evaluate(page, `document.activeElement && document.activeElement.blur()`, false);
+    await sleep(300);
+    const afterMenuCreate = await evaluate(page, `document.querySelectorAll('.cv-node').length`, false);
+    check('右键菜单新建节点生效', afterMenuCreate === beforeMenuCreate + 1, `${beforeMenuCreate} -> ${afterMenuCreate}`);
+    check('菜单已关闭', !(await evaluate(page, `!!document.querySelector('.cv-menu')`, false)));
+
     if (logs.length) {
       console.log('\n--- console ---\n' + logs.join('\n'));
     }

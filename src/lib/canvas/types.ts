@@ -46,9 +46,19 @@ export interface ImageData extends Record<string, unknown> {
   alt: string;
 }
 
-export type CanvasNodeData = NoteData | ImageData;
+/** PDF 裁切块：图片是页面区域截图，text 是该区域的文字（数字版 PDF 直接就有） */
+export interface PdfCropData extends Record<string, unknown> {
+  kind: 'pdf-crop';
+  assetId: string;
+  text: string;
+  source: string;
+  page: number;
+  regionKind: string;
+}
 
-export type CanvasNode = Node<CanvasNodeData, 'note' | 'image'>;
+export type CanvasNodeData = NoteData | ImageData | PdfCropData;
+
+export type CanvasNode = Node<CanvasNodeData, 'note' | 'image' | 'pdf-crop'>;
 
 export interface Notebook {
   id: string;
