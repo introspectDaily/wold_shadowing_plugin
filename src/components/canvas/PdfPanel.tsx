@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { analyzePage } from '../../lib/pdf/analyze';
+import { analyzeCanvas } from '../../lib/pdf/analyze';
 import type { Region, RegionKind } from '../../lib/pdf/layout';
 import {
   PAGE_SCALE,
   canvasToBlob,
   cropCanvas,
+  extractTextItems,
   openPdf,
   renderPage,
   type PdfHandle,
 } from '../../lib/pdf/pdfDoc';
+import { isOcrAvailable } from '../../lib/pdf/ocr';
 import { isLayoutModelAvailable } from '../../lib/pdf/paddleLayout';
 
 export interface PdfCropPayload {
@@ -61,6 +63,7 @@ export function PdfPanel({ onAddCrop, onClose, initialFile, onFileConsumed }: Pr
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<'model' | 'text' | 'none' | ''>('');
   const [modelReady, setModelReady] = useState<boolean | null>(null);
+  const [ocrReady, setOcrReady] = useState<boolean | null>(null);
   const [drag, setDrag] = useState<DragRect | null>(null);
 
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -68,20 +71,28 @@ export function PdfPanel({ onAddCrop, onClose, initialFile, onFileConsumed }: Pr
 
   useEffect(() => {
     void isLayoutModelAvailable().then(setModelReady);
+    void isOcrAvailable().then(setOcrReady);
   }, []);
 
   const analyze = useCallback(
-    async (handle: PdfHandle, page: number, rendered: HTMLCanvasElement) => {
+    async (handle: PdfHandle | null, page: number, rendered: HTMLCanvasElement) => {
       setBusy(true);
       setStatus('分析版面…');
       try {
-        const result = await analyzePage(handle, page, rendered);
+        const textLayer = handle ? await extractTextItems(handle, page) : null;
+        const result = await analyzeCanvas(
+          rendered,
+          textLayer?.items ?? null,
+          textLayer?.pageWidth ?? rendered.width,
+          textLayer?.pageHeight ?? rendered.height,
+        );
         setRegions(result.regions);
         setMode(result.mode);
         setSelected(null);
+        const ocrNote = result.ocrUsed ? ' + OCR' : '';
         setStatus(
           result.mode === 'model'
-            ? `布局模型切出 ${result.regions.length} 块`
+            ? `布局模型切出 ${result.regions.length} 块${ocrNote}`
             : result.mode === 'text'
               ? `文字层切出 ${result.regions.length} 块${result.modelError ? `（模型不可用：${result.modelError}）` : ''}`
               : `没切出区域，请手动框选${result.modelError ? `（模型不可用：${result.modelError}）` : ''}`,
@@ -113,8 +124,40 @@ export function PdfPanel({ onAddCrop, onClose, initialFile, onFileConsumed }: Pr
     [analyze],
   );
 
+  /** 图片直接当成「一页」处理：没有文字层，全靠模型 + OCR */
+  const openImage = useCallback(
+    async (file: File) => {
+      setBusy(true);
+      setStatus('读取图片…');
+      try {
+        const bitmap = await createImageBitmap(file);
+        const scale = Math.min(2, Math.max(1, 1600 / bitmap.width));
+        const c = document.createElement('canvas');
+        c.width = Math.round(bitmap.width * scale);
+        c.height = Math.round(bitmap.height * scale);
+        c.getContext('2d')?.drawImage(bitmap, 0, 0, c.width, c.height);
+        bitmap.close();
+        setPdf(null);
+        setFileName(file.name);
+        setPageNo(1);
+        setRegions([]);
+        setCanvas(c);
+        await analyze(null, 1, c);
+      } catch (err) {
+        setStatus(`读取图片失败：${(err as Error).message}`);
+      } finally {
+        setBusy(false);
+      }
+    },
+    [analyze],
+  );
+
   const onFile = useCallback(
     async (file: File) => {
+      if (file.type.startsWith('image/')) {
+        await openImage(file);
+        return;
+      }
       setBusy(true);
       setStatus('读取 PDF…');
       try {
@@ -131,7 +174,7 @@ export function PdfPanel({ onAddCrop, onClose, initialFile, onFileConsumed }: Pr
         setBusy(false);
       }
     },
-    [goPage],
+    [goPage, openImage],
   );
 
   useEffect(() => {
@@ -207,6 +250,7 @@ export function PdfPanel({ onAddCrop, onClose, initialFile, onFileConsumed }: Pr
             : '未找到布局模型：pnpm fetch:model 下载后可切出图片/表格区域'
         }>
           {modelReady ? '布局模型已就绪' : '文字块模式'}
+          {ocrReady ? ' · OCR' : ''}
         </span>
         <button type="button" className="cv-icon-btn" title="关闭" onClick={onClose}>
           ✕
@@ -253,7 +297,7 @@ export function PdfPanel({ onAddCrop, onClose, initialFile, onFileConsumed }: Pr
         <input
           ref={fileRef}
           type="file"
-          accept="application/pdf"
+          accept="application/pdf,image/*"
           hidden
           onChange={(e) => {
             const f = e.target.files?.[0];
@@ -263,7 +307,7 @@ export function PdfPanel({ onAddCrop, onClose, initialFile, onFileConsumed }: Pr
         />
       </div>
 
-      {!pdf && (
+      {!canvas && (
         <div
           className="cv-pdf-empty"
           onDragOver={(e) => {
@@ -271,21 +315,24 @@ export function PdfPanel({ onAddCrop, onClose, initialFile, onFileConsumed }: Pr
           }}
           onDrop={(e) => {
             const f = Array.from(e.dataTransfer.files).find(
-              (x) => x.type === 'application/pdf' || x.name.toLowerCase().endsWith('.pdf'),
+              (x) =>
+                x.type === 'application/pdf' ||
+                x.type.startsWith('image/') ||
+                x.name.toLowerCase().endsWith('.pdf'),
             );
             if (!f) return;
             e.preventDefault();
             void onFile(f);
           }}
         >
-          <div className="cv-pdf-empty__title">把 PDF 拖到这里</div>
+          <div className="cv-pdf-empty__title">把 PDF 或图片拖到这里</div>
           <div className="cv-pdf-empty__line">或者点上面的「选择 PDF」</div>
           <div className="cv-pdf-empty__line">自动按版面切块，点「＋」放到画布</div>
           <div className="cv-pdf-empty__line">也可以在页面上直接拖出选框，人工切</div>
         </div>
       )}
 
-      {pdf && (
+      {canvas && (
         <div className="cv-pdf-stagewrap">
           <div
             ref={stageRef}

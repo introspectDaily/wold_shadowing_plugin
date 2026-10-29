@@ -54,6 +54,14 @@ export interface PdfCropData extends Record<string, unknown> {
   source: string;
   page: number;
   regionKind: string;
+  /** 文字区是否展开：要在刷新后保持原样，否则节点会变成一个「空壳大图」 */
+  textOpen?: boolean;
+  /** PDF 里的原始字号（pt）：展开的文字要和图片里的字一样大，靠它换算 */
+  fontSize?: number;
+  /** 裁切图在 PAGE_SCALE 下的像素宽（即区块的「原始」CSS 宽度），用做字号的缩放基准 */
+  renderWidth?: number;
+  /** 手动字号的微调倍率（侧栏的 A− / A+） */
+  fontScale?: number;
 }
 
 export type CanvasNodeData = NoteData | ImageData | PdfCropData;

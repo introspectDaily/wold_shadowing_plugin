@@ -1,11 +1,18 @@
 /**
- * 版面分析的总入口：优先用 PP-DocLayout-S 模型，拿不到就回退到文字块聚类。
+ * 版面分析的总入口。
  *
- * 两种结果都归一化成同一套 Region，上层 UI 完全不用关心来源。
+ * 两条信息来源，随时可能只有其中一条：
+ *   1. 文字层（数字版 PDF 有，扫描件/图片没有）
+ *   2. PP-DocLayout-S 布局模型（装了模型才有）
+ *
+ * 策略：
+ *   - 有文字层：文字块聚类兜底，模型可用时用模型的框（能识别图片/表格），文字按覆盖关系补进去
+ *   - 没文字层（扫描件/图片）：只能靠模型切块，切出来的文字区域再跑 PP-OCRv6 识别
  */
-import { clusterTextItems, type Region } from './layout';
+import { clusterTextItems, type Region, type TextItem } from './layout';
+import { ocrRegion } from './ocr';
 import { analyzeLayoutWithModel, getLayoutError } from './paddleLayout';
-import { extractTextItems, type PdfHandle } from './pdfDoc';
+import { cropCanvas } from './pdfDoc';
 
 export interface AnalyzeResult {
   regions: Region[];
@@ -14,6 +21,8 @@ export interface AnalyzeResult {
   hasTextLayer: boolean;
   /** 模型不可用时的原因，给 UI 展示 */
   modelError?: string | null;
+  /** 是否跑过 OCR */
+  ocrUsed?: boolean;
 }
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -35,13 +44,11 @@ function attachText(regions: Region[], textRegions: Region[]): Region[] {
       const y0 = Math.min(r.y, ...hit.map((t) => t.y));
       const x1 = Math.max(r.x + r.w, ...hit.map((t) => t.x + t.w));
       const y1 = Math.max(r.y + r.h, ...hit.map((t) => t.y + t.h));
-      // 撑开幅度限制在原区域的 1.6 倍以内，避免把整页都框进来
       if ((x1 - x0) * (y1 - y0) <= r.w * r.h * 1.6) {
         box = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
       }
     }
 
-    // 再留一点边距，保证文字不会贴着裁切边缘
     const padX = 0.006;
     const padY = 0.004;
     const x = clamp01(box.x - padX);
@@ -57,30 +64,66 @@ function attachText(regions: Region[], textRegions: Region[]): Region[] {
   });
 }
 
-export async function analyzePage(
-  pdf: PdfHandle,
-  pageNumber: number,
+/** 这些类别才值得 OCR；图片/表格/公式就留给截图 */
+const OCR_KINDS = new Set(['text', 'title', 'caption', 'header', 'footer', 'other']);
+
+/** 对没有文字的文本区域跑 OCR */
+async function ocrRegions(
+  regions: Region[],
   canvas: HTMLCanvasElement,
+): Promise<{ regions: Region[]; used: boolean }> {
+  let used = false;
+  const out: Region[] = [];
+  for (const r of regions) {
+    if (r.text && r.text.trim()) {
+      out.push(r);
+      continue;
+    }
+    if (!OCR_KINDS.has(r.kind)) {
+      out.push(r);
+      continue;
+    }
+    // 太小的块不值得识别（页码碎块之类）
+    if (r.w * canvas.width < 24 || r.h * canvas.height < 12) {
+      out.push(r);
+      continue;
+    }
+    const text = await ocrRegion(cropCanvas(canvas, r));
+    if (text) used = true;
+    out.push({ ...r, text });
+  }
+  return { regions: out, used };
+}
+
+/**
+ * 核心入口：给定一张页面画布 + 可选的文字层，返回版面区域。
+ */
+export async function analyzeCanvas(
+  canvas: HTMLCanvasElement,
+  textItems: TextItem[] | null,
+  pageWidth: number,
+  pageHeight: number,
 ): Promise<AnalyzeResult> {
-  const { items, pageWidth, pageHeight } = await extractTextItems(pdf, pageNumber);
-  const hasTextLayer = items.length > 4;
+  const hasTextLayer = (textItems?.length ?? 0) > 4;
+  const textRegions = hasTextLayer
+    ? clusterTextItems(textItems!, pageWidth, pageHeight)
+    : [];
+  const modelRegions = await analyzeLayoutWithModel(canvas);
+
+  if (modelRegions && modelRegions.length > 0) {
+    let regions = hasTextLayer ? attachText(modelRegions, textRegions) : modelRegions;
+    let ocrUsed = false;
+    if (!hasTextLayer) {
+      const res = await ocrRegions(regions, canvas);
+      regions = res.regions;
+      ocrUsed = res.used;
+    }
+    return { regions, mode: 'model', hasTextLayer, ocrUsed };
+  }
 
   if (hasTextLayer) {
-    const textRegions = clusterTextItems(items, pageWidth, pageHeight);
-    const modelRegions = await analyzeLayoutWithModel(canvas);
-
-    if (modelRegions && modelRegions.length > 0) {
-      // 有模型时用模型的框（能识别图片/表格/公式这些没有文字的区域），
-      // 文字从文字层按覆盖关系补进去
-      return { regions: attachText(modelRegions, textRegions), mode: 'model', hasTextLayer };
-    }
     return { regions: textRegions, mode: 'text', hasTextLayer, modelError: getLayoutError() };
   }
 
-  // 扫描件：没有文字层，只能靠模型
-  const modelRegions = await analyzeLayoutWithModel(canvas);
-  if (modelRegions && modelRegions.length > 0) {
-    return { regions: modelRegions, mode: 'model', hasTextLayer };
-  }
   return { regions: [], mode: 'none', hasTextLayer, modelError: getLayoutError() };
 }

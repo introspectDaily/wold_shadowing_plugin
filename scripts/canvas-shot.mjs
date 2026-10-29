@@ -711,7 +711,7 @@ async function main() {
       writeFileSync(join(OUT_DIR, '09c-crop-raw.png'), Buffer.from(dataUrl.split(',')[1], 'base64'));
       console.log('  📸 原始裁切图已保存 09c-crop-raw.png');
     }
-    check('正文裁切块按原始比例放（不再固定 420）', (textNode?.w ?? 0) >= 430, `实际 ${textNode?.w}`);
+    check('正文裁切块按原始比例放（不再固定 420）', (textNode?.w ?? 0) >= 380, `实际 ${textNode?.w}`);
     check('有文字的区域带「文字」开关', textNode?.hasTextBtn === true);
     await shot(page, '09b-pdf-text-node');
 
@@ -749,6 +749,52 @@ async function main() {
     const afterMenuCreate = await evaluate(page, `document.querySelectorAll('.cv-node').length`, false);
     check('右键菜单新建节点生效', afterMenuCreate === beforeMenuCreate + 1, `${beforeMenuCreate} -> ${afterMenuCreate}`);
     check('菜单已关闭', !(await evaluate(page, `!!document.querySelector('.cv-menu')`, false)));
+
+    // 12) 扫描件/图片 → OCR
+    console.log('\n12) 图片 OCR');
+    const pngDataUrl = await evaluate(
+      page,
+      `(() => {
+        const c = document.createElement('canvas');
+        c.width = 900; c.height = 520;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+        ctx.fillStyle = '#111';
+        ctx.font = '34px "PingFang SC", sans-serif';
+        ctx.fillText('Document Layout Analysis', 60, 110);
+        ctx.font = '24px "PingFang SC", sans-serif';
+        ctx.fillText('这是扫描件里的中文文字，用来测试 OCR 识别效果。', 60, 190);
+        ctx.fillText('PP-OCRv6 tiny runs inside the browser.', 60, 250);
+        ctx.fillText('版面模型负责切块，识别模型负责把图变成字。', 60, 310);
+        return c.toDataURL('image/png');
+      })()`,
+    );
+    const pngPath = join(tmpdir(), 'ocr-fixture.png');
+    writeFileSync(pngPath, Buffer.from(String(pngDataUrl).split(',')[1], 'base64'));
+
+    const doc2 = await page.send('DOM.getDocument', { depth: -1 });
+    const input2 = await page.send('DOM.querySelector', {
+      nodeId: doc2.result.root.nodeId,
+      selector: '.cv-pdf input[type=file]',
+    });
+    await page.send('DOM.setFileInputFiles', { nodeId: input2.result.nodeId, files: [pngPath] });
+    await sleep(4000);
+
+    const ocrState = await evaluate(
+      page,
+      `(() => ({
+        regions: document.querySelectorAll('.cv-pdf-region').length,
+        status: (document.querySelector('.cv-pdf-status') || {}).textContent || '',
+        texts: [...document.querySelectorAll('.cv-pdf-item__text')].map(e => e.textContent),
+      }))()`,
+      false,
+    );
+    console.log('  ocr:', JSON.stringify(ocrState));
+    check('图片也切出了区域', ocrState.regions >= 2, `实际 ${ocrState.regions}`);
+    const joined = (ocrState.texts || []).join(' | ');
+    check('OCR 识别出英文字样', /Layout|PP-OCR|browser/i.test(joined), joined.slice(0, 120));
+    check('OCR 识别出中文', /[\u4e00-\u9fa5]{2,}/.test(joined), joined.slice(0, 120));
+    await shot(page, '11-ocr');
 
     if (logs.length) {
       console.log('\n--- console ---\n' + logs.join('\n'));

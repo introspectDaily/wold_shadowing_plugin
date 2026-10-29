@@ -218,6 +218,16 @@ function CanvasSurface({
           ),
         );
       },
+      resize(id, size) {
+        setNodes((ns) =>
+          ns.map((n) => {
+            if (n.id !== id) return n;
+            const width = size.width ?? n.width ?? n.measured?.width;
+            const height = size.height ?? n.height;
+            return { ...n, width, height };
+          }),
+        );
+      },
       remove(id) {
         setNodes((ns) => ns.filter((n) => n.id !== id));
       },
@@ -311,7 +321,9 @@ function CanvasSurface({
       const natural = (payload.width || 620) / PAGE_SCALE;
       const width = Math.round(Math.min(820, Math.max(300, natural)));
       const ratio = payload.height / (payload.width || 1);
-      const height = Math.round(width * ratio) + 26; // 26 = 顶部信息条
+      // 26 = 顶部信息条；有文字时再加一行摘要条，图片才能保持 1:1 不被压缩
+      const chrome = 26 + (payload.text.trim() ? 24 : 0);
+      const height = Math.max(120, Math.round(width * ratio) + chrome);
       const center = screenToFlowPosition({
         x: window.innerWidth / 2,
         y: window.innerHeight / 2,

@@ -991,9 +991,10 @@
   background: var(--primary-weak);
 }
 
-/* 画布上的 PDF 裁切块 */
+/* 画布上的 PDF 裁切块：信息条 / 图 / 文字三块紧贴，靠分隔线区分 */
 .cv-node--pdf {
   padding: 0;
+  gap: 0;
   overflow: hidden;
   background: #fff;
 }
@@ -1006,6 +1007,7 @@
   border-bottom: 1px solid var(--border);
   font-size: 10.5px;
   color: var(--muted);
+  flex: 0 0 auto;
 }
 
 .cv-pdf-badge {
@@ -1039,10 +1041,71 @@
 
 .cv-pdf-body {
   position: relative;
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 120px;
   min-height: 0;
   overflow: hidden;
   background: #fff;
+}
+
+/* 图 / 文字侧栏：收起时上下排，展开时左右排 */
+.cv-pdf-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.cv-node--pdf.is-text-open .cv-pdf-main {
+  flex-direction: row;
+}
+
+/* 文字侧栏：宽度固定，图变宽时它不变——所以图拉大 = 字跟着变大 */
+.cv-pdf-side {
+  display: flex;
+  flex: 0 0 340px;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 58%;
+  border-left: 1px solid var(--border);
+  background: #fcfcfd;
+}
+
+.cv-pdf-side__bar {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--border);
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.cv-pdf-side__size {
+  min-width: 36px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.cv-pdf-side__spacer {
+  flex: 1;
+}
+
+.cv-pdf-side__btn {
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  color: var(--text-2);
+  background: var(--bg);
+}
+
+.cv-pdf-side__btn:hover,
+.cv-pdf-side__btn.is-on {
+  background: var(--primary-weak);
+  color: var(--primary);
 }
 
 .cv-pdf-img {
@@ -1055,15 +1118,57 @@
   display: block;
 }
 
-.cv-pdf-text {
-  max-height: 150px;
-  overflow: auto;
-  padding: 8px 10px;
-  font-size: 12.5px;
-  line-height: 1.65;
-  color: var(--text);
+/* 收起状态：底部一行摘要，不抢图片空间 */
+.cv-pdf-snippet {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  width: 100%;
+  padding: 4px 8px;
   border-top: 1px solid var(--border);
-  background: #fcfcfd;
+  background: #fbfbfd;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-2);
+  text-align: left;
+}
+
+.cv-pdf-snippet:hover {
+  background: var(--primary-weak);
+  color: var(--primary);
+}
+
+.cv-pdf-snippet__label {
+  flex-shrink: 0;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--bg);
+  font-size: 9.5px;
+  color: var(--muted);
+}
+
+.cv-pdf-snippet:hover .cv-pdf-snippet__label {
+  background: #fff;
+  color: var(--primary);
+}
+
+.cv-pdf-snippet__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 展开状态：字号由 JS 按图片缩放比算好，这里只管滚动 */
+.cv-pdf-text {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px 12px 12px;
+  line-height: 1.55;
+  color: var(--text);
   white-space: pre-wrap;
   word-break: break-word;
 }

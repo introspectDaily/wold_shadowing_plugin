@@ -7,6 +7,8 @@ import type { CanvasNodeData } from '../../lib/canvas/types';
 
 export interface NodeActions {
   updateData(id: string, patch: Partial<CanvasNodeData>): void;
+  /** 改节点尺寸（PDF 块展开文字时用来把节点撑高，避免文字被裁、图片被挤） */
+  resize(id: string, size: { width?: number; height?: number }): void;
   remove(id: string): void;
   bringToFront(id: string): void;
   sendToBack(id: string): void;
